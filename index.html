@@ -338,33 +338,94 @@ h2{letter-spacing:0}
 .menubtn .mlabel{font-family:var(--sans)}
 @media(max-width:420px){.menubtn .mlabel{display:none}.menubtn{width:38px;padding:0}}
 
-/* ── 화면 맞춤: 데스크톱·태블릿은 스크롤 없이 한 화면에 ── */
+/* ── 화면 맞춤: 데스크톱·태블릿은 한 화면에 맞춤(가독성 위해 0.8배까지만 축소) ── */
 @media(min-width:701px){
-  html,body{height:100%}
-  body{overflow:hidden}
-  .app{position:fixed;inset:0;max-width:none;margin:0;padding:0;
-       display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
-  /* fadeInUp 은 transform 을 애니메이션하므로(fill:both) 우리가 넣는 스케일 transform 을
-     덮어씁니다. 데스크톱에서는 transform 없는 페이드로 바꿔 스케일이 유지되게 합니다. */
-  .shell{width:min(800px,94vw);transform-origin:top center;will-change:transform;
+  body{overflow-x:hidden}
+  .app{max-width:none;margin:0;padding:14px 0;text-align:center}
+  /* fadeInUp 은 transform 을 애니메이션(fill:both)해 우리 스케일을 덮어쓰므로
+     데스크톱에서는 transform 없는 페이드로 바꿉니다. inline-block+가운데정렬로 좌우 중앙. */
+  .shell{display:inline-block;text-align:left;width:min(800px,94vw);
+         transform-origin:top center;will-change:transform;
          backface-visibility:hidden;animation:fadeIn .5s ease-out both}
 }
 
-/* ── 넓은 화면: 좌우 2단으로 옆 공간 활용 ── */
+/* ── 넓은 화면: 좌우 2단 + 큰 글씨 + 큰 이미지 ── */
 @media(min-width:900px){
-  .shell{width:min(1180px,96vw)}
-  .pane{display:grid;grid-template-columns:1.02fr 1fr;gap:clamp(24px,3.4vw,46px);align-items:start;margin-top:2px}
+  .shell{width:min(1340px,97vw)}
+  /* 내부 단계에서는 큰 제목을 숨겨 세로 공간을 확보(단계 제목이 대신함) */
+  body:not(.on-cover):not(.on-hero) .masthead{display:none}
+  /* 여백·최소높이 축소로 축소율을 1에 가깝게 */
+  .content{min-height:0;padding:clamp(14px,1.8vw,24px) clamp(20px,2.6vw,34px) clamp(16px,2vw,26px)}
+  .panel{padding:clamp(18px,2.2vw,26px) clamp(16px,2vw,24px)}
+  .progress{padding-top:16px}
+
+  /* 2단 배치 */
+  .pane{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(26px,3vw,48px);align-items:center;margin-top:2px}
   .pane .hero{margin:0}
-  .pane .hero img{max-height:60vh;width:auto;max-width:100%;display:block;margin:0 auto}
-  .pane .paneR>.nav{margin-top:22px}
-  .pane .results{margin-bottom:0}
-  /* 주제 선택: 항목을 2열로 */
-  .s-topic .rows{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  /* 뽑은 카드 슬롯 3칸을 가로로 */
+  .pane .hero img{max-height:62vh;width:100%;display:block;margin:0 auto;border:1px solid var(--line)}
+  .pane .paneR>.nav{margin-top:24px}
+  .pane .results{margin-bottom:0;gap:16px}
+  .s-topic .rows{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  /* 색 목록도 2열로 → 세로 높이 절반 */
+  .s-color .rows{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  /* 리딩: 카드 3장을 가로로, 해석은 2열로 흘려 높이를 줄임 */
+  .s-reading .results{flex-direction:row;gap:16px;margin-bottom:20px}
+  .s-reading .result{flex:1}
+  .s-reading .reading{column-count:2;column-gap:38px}
+  .s-reading .reading p{break-inside:avoid}
+  .s-reading .chatlog{max-width:none}
   .s-draw .slots{flex-direction:row}
   .s-draw .slot{flex:1}
-  /* 표지는 세로 포스터라 중앙에 둠 */
-  .cover .poster{max-width:540px;margin-inline:auto}
+  .s-draw .tarot-room{height:clamp(360px,44vh,460px)}
+  .cover .poster{max-width:560px;margin-inline:auto}
+
+  /* ── 글씨 크게 ── */
+  h2{font-size:clamp(30px,2.5vw,42px);margin-bottom:16px}
+  .lead{font-size:17.5px;line-height:1.8;max-width:none}
+  .divider span{font-size:12px}
+  .rowtext strong{font-size:20px}
+  .rowtext .desc{font-size:15px;margin-top:5px}
+  .row{padding:17px 22px;gap:16px}
+  .orb{width:26px;height:26px;flex:0 0 26px;font-size:17px}
+  .btn{font-size:16px;padding:16px 30px}
+  .nav .btn{min-width:150px}
+  .plaque{font-size:21px;padding:13px;margin-bottom:20px}
+  .result h3{font-size:28px}
+  .result p{font-size:16px}
+  .result .lbl{font-size:14px;margin-bottom:8px}
+  .reading{padding:30px}
+  .reading p{font-size:17.5px;line-height:1.95;margin-bottom:16px}
+  .notice{font-size:15px;padding:16px 20px}
+  .slot strong{font-size:23px}
+  .slot .lbl{font-size:12px}
+  .slot .ori{font-size:15px}
+  .bubble{font-size:16px;line-height:1.8;padding:14px 18px}
+  .ava{width:34px;height:34px;flex:0 0 34px;font-size:13px}
+  textarea{font-size:16px}
+  .chatbar textarea{min-height:56px}
+  .send{flex:0 0 60px;height:56px;font-size:18px}
+  .chathint{font-size:13px}
+  .scent h3{font-size:30px}
+  .scent p{font-size:15px;line-height:1.7}
+  .scent small{font-size:10.5px}
+  .scent{padding:30px 22px}
+
+  /* ── 이미지 크게 ── */
+  .result img{width:106px;height:182px;flex:0 0 106px}
+  .result.rev img{transform:rotate(180deg)}
+  .slot img{width:72px;height:124px;flex:0 0 72px}
+}
+
+/* 아주 넓은 모니터: 더 크게 */
+@media(min-width:1500px){
+  .shell{width:min(1500px,94vw)}
+  .lead{font-size:19px}
+  .rowtext strong{font-size:22px}
+  .rowtext .desc{font-size:16px}
+  .reading p{font-size:19px}
+  .btn{font-size:17px}
+  .result h3{font-size:31px}
+  .result img{width:120px;height:206px;flex:0 0 120px}
 }
 
 </style>
@@ -946,13 +1007,11 @@ function combine(a,b,c){
 
 function readingScreen(){
   screenEl.innerHTML=divider("STEP 04")+`<div class="plaque">리딩 결과</div>`
-  +twoPane(
-    `<div class="results">${state.draw.map((d,i)=>`<article class="result ${d.rev?"rev":""}">${img(d)}
-      <div><span class="lbl">${i+1}. ${roles[i]}</span><h3>${d.ko}</h3><p>${d.rev?"역방향":"정방향"}</p></div></article>`).join("")}</div>`,
-    `<div class="reading">${state.reading}</div>
-     <div class="notice">이 리딩은 미래 예언이나 심리 진단이 아니라, 타로의 상징과 배열을 활용해 현재의 생각과 감정을 돌아보는 활동입니다.</div>`
-     +askBlock()
-  )
+  +`<div class="results">${state.draw.map((d,i)=>`<article class="result ${d.rev?"rev":""}">${img(d)}
+      <div><span class="lbl">${i+1}. ${roles[i]}</span><h3>${d.ko}</h3><p>${d.rev?"역방향":"정방향"}</p></div></article>`).join("")}</div>`
+  +`<div class="reading">${state.reading}</div>
+    <div class="notice">이 리딩은 미래 예언이나 심리 진단이 아니라, 타로의 상징과 배열을 활용해 현재의 생각과 감정을 돌아보는 활동입니다.</div>`
+  +askBlock()
   +`<div class="nav"><button class="btn" onclick="redraw()">다시 뽑기</button>
     <button class="btn primary" onclick="next()">향기 추천</button></div>`+mark;
   initChat();
@@ -1147,16 +1206,20 @@ function localAnswer(){
   const shell=document.querySelector(".shell");
   if(!shell)return;
   const MARGIN=14;
+  const MIN_SCALE=0.8;   // 이보다 더 줄이지 않음(글씨 가독성). 넘치면 그 화면만 세로 스크롤.
   function fit(){
     // 모바일은 제외 — 원래대로
-    if(window.matchMedia("(max-width:700px)").matches){shell.style.transform="";return}
-    shell.style.transform="";                 // 원래 크기로 되돌려 실측
+    if(window.matchMedia("(max-width:700px)").matches){shell.style.transform="";shell.style.marginBottom="";return}
+    shell.style.transform="";shell.style.marginBottom="";   // 원래 크기로 되돌려 실측
     const natH=shell.offsetHeight, natW=shell.offsetWidth;
     if(!natH)return;
     const availH=window.innerHeight-MARGIN*2, availW=window.innerWidth-MARGIN*2;
-    const s=Math.min(availH/natH, availW/natW, 1);
-    const offY=Math.max(MARGIN,(window.innerHeight-natH*s)/2);
-    shell.style.transform="translateY("+offY+"px) scale("+s+")";
+    let s=Math.min(1, availW/natW);            // 폭은 항상 맞춤(넘지 않게)
+    const sh=availH/natH;
+    if(sh<s) s=Math.max(sh, MIN_SCALE);        // 높이에 맞추되 0.8배 밑으론 안 줄임
+    shell.style.transform="scale("+s+")";
+    // 축소로 생긴 빈 레이아웃 공간 회수 → 맞으면 스크롤 없음, 넘치면 그만큼만 스크롤
+    shell.style.marginBottom=(-(natH*(1-s)))+"px";
   }
   let raf;
   function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(fit)}
