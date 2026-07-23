@@ -350,6 +350,23 @@ h2{letter-spacing:0}
          backface-visibility:hidden;animation:fadeIn .5s ease-out both}
 }
 
+/* ── 넓은 화면: 좌우 2단으로 옆 공간 활용 ── */
+@media(min-width:900px){
+  .shell{width:min(1180px,96vw)}
+  .pane{display:grid;grid-template-columns:1.02fr 1fr;gap:clamp(24px,3.4vw,46px);align-items:start;margin-top:2px}
+  .pane .hero{margin:0}
+  .pane .hero img{max-height:60vh;width:auto;max-width:100%;display:block;margin:0 auto}
+  .pane .paneR>.nav{margin-top:22px}
+  .pane .results{margin-bottom:0}
+  /* 주제 선택: 항목을 2열로 */
+  .s-topic .rows{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  /* 뽑은 카드 슬롯 3칸을 가로로 */
+  .s-draw .slots{flex-direction:row}
+  .s-draw .slot{flex:1}
+  /* 표지는 세로 포스터라 중앙에 둠 */
+  .cover .poster{max-width:540px;margin-inline:auto}
+}
+
 </style>
 </head>
 <body>
@@ -485,6 +502,8 @@ const divider=t=>`<div class="divider"><span>${t}</span></div>`;
 const head=(n,title,lead)=>`${divider("STEP 0"+n)}<h2>${title}</h2><p class="lead">${lead}</p>`;
 const panel=inner=>`<div class="panel">${inner}</div>`;
 const mark=`<div class="mark">✦</div>`;
+/* 넓은 화면에서 좌우 2단으로 배치(모바일에선 세로로 쌓임) */
+const twoPane=(l,r)=>`<div class="pane"><div class="paneL">${l}</div><div class="paneR">${r}</div></div>`;
 function row(label,desc,sel,onclick,color){
   const orb=color?`<span class="orb" style="color:${color}"><i></i></span>`:`<span class="orb"><i></i></span>`;
   return `<button class="row ${sel?"sel":""}" onclick="${onclick}">${orb}
@@ -753,7 +772,8 @@ function render(){
   document.body.classList.toggle("on-cover",onCover);
   document.body.classList.toggle("on-hero",state.step===0);
   if(onCover){coverScreen();window.scrollTo({top:0,behavior:"smooth"});return}
-  screenEl.className="content";
+  const names=["s-color","s-topic","s-draw","s-reading","s-scent"];
+  screenEl.className="content "+(names[state.step]||"");
   prog();
   if(state.step===0)colorScreen();
   else if(state.step===1)topicScreen();
@@ -771,12 +791,14 @@ function coverScreen(){
 }
 
 function colorScreen(){
-  screenEl.innerHTML=`<div class="hero"><img src="${HERO}" alt="나의 향기, 나를 다독여주는, 위로하는 향기"></div>`
-   +panel(head(1,"지난 시간의 감정 색",
-    "2차시에서 정한 색을 선택하세요. 색은 리딩의 결론이 아니라, 현재 에너지를 보완하는 배경 정보로만 사용합니다.")
-   +`<div class="rows">${colors.map((c,i)=>row(c[0],"",state.color===c[0],`setColor(${i})`,c[1])).join("")}</div>`)
-   +`<div class="nav"><button class="btn" onclick="toCover()">표지로</button>
-      <button class="btn primary" ${state.color?"":"disabled"} onclick="next()">다음</button></div>`+mark;
+  screenEl.innerHTML=twoPane(
+    `<div class="hero"><img src="${HERO}" alt="나의 향기, 나를 다독여주는, 위로하는 향기"></div>`,
+    panel(head(1,"지난 시간의 감정 색",
+      "2차시에서 정한 색을 선택하세요. 색은 리딩의 결론이 아니라, 현재 에너지를 보완하는 배경 정보로만 사용합니다.")
+     +`<div class="rows">${colors.map((c,i)=>row(c[0],"",state.color===c[0],`setColor(${i})`,c[1])).join("")}</div>`)
+     +`<div class="nav"><button class="btn" onclick="toCover()">표지로</button>
+        <button class="btn primary" ${state.color?"":"disabled"} onclick="next()">다음</button></div>`
+  )+mark;
 }
 
 function topicScreen(){
@@ -923,13 +945,16 @@ function combine(a,b,c){
 }
 
 function readingScreen(){
-  screenEl.innerHTML=divider("STEP 04")+`<div class="plaque">리딩 결과</div>
-  <div class="results">${state.draw.map((d,i)=>`<article class="result ${d.rev?"rev":""}">${img(d)}
-    <div><span class="lbl">${i+1}. ${roles[i]}</span><h3>${d.ko}</h3><p>${d.rev?"역방향":"정방향"}</p></div></article>`).join("")}</div>
-  <div class="reading">${state.reading}</div>
-  <div class="notice">이 리딩은 미래 예언이나 심리 진단이 아니라, 타로의 상징과 배열을 활용해 현재의 생각과 감정을 돌아보는 활동입니다.</div>
-  <div class="nav"><button class="btn" onclick="redraw()">다시 뽑기</button>
-    <button class="btn primary" onclick="next()">향기 추천</button></div>`+askBlock()+mark;
+  screenEl.innerHTML=divider("STEP 04")+`<div class="plaque">리딩 결과</div>`
+  +twoPane(
+    `<div class="results">${state.draw.map((d,i)=>`<article class="result ${d.rev?"rev":""}">${img(d)}
+      <div><span class="lbl">${i+1}. ${roles[i]}</span><h3>${d.ko}</h3><p>${d.rev?"역방향":"정방향"}</p></div></article>`).join("")}</div>`,
+    `<div class="reading">${state.reading}</div>
+     <div class="notice">이 리딩은 미래 예언이나 심리 진단이 아니라, 타로의 상징과 배열을 활용해 현재의 생각과 감정을 돌아보는 활동입니다.</div>`
+     +askBlock()
+  )
+  +`<div class="nav"><button class="btn" onclick="redraw()">다시 뽑기</button>
+    <button class="btn primary" onclick="next()">향기 추천</button></div>`+mark;
   initChat();
 }
 
