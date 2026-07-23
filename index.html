@@ -49,7 +49,7 @@ button:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outlin
   background-size:74px 74px}
 
 /* ── 상단 바 ───────────────────────────── */
-.topbar{position:relative;z-index:45;display:flex;align-items:center;justify-content:space-between;padding:26px 30px 0}
+.topbar{position:relative;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:26px 30px 0}
 .iconbtn{
   width:38px;height:38px;border-radius:50%;border:1.5px solid var(--gold);background:transparent;
   color:var(--gold);font-size:16px;line-height:1;display:grid;place-items:center;transition:all .25s ease
@@ -333,6 +333,23 @@ h2{letter-spacing:0}
 .sdel{flex:0 0 34px;height:36px;border:1px solid var(--line);background:transparent;color:#9c3b2e;font-size:17px;line-height:1;transition:all .25s ease}
 .sdel:hover{background:rgba(156,59,46,.1);border-color:#9c3b2e}
 
+/* ── ☰ 메뉴 버튼: 아이콘만이면 못 찾으니 라벨을 붙임 ── */
+.menubtn{width:auto;border-radius:19px;padding:0 16px;gap:7px;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.menubtn .mlabel{font-family:var(--sans)}
+@media(max-width:420px){.menubtn .mlabel{display:none}.menubtn{width:38px;padding:0}}
+
+/* ── 화면 맞춤: 데스크톱·태블릿은 스크롤 없이 한 화면에 ── */
+@media(min-width:701px){
+  html,body{height:100%}
+  body{overflow:hidden}
+  .app{position:fixed;inset:0;max-width:none;margin:0;padding:0;
+       display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
+  /* fadeInUp 은 transform 을 애니메이션하므로(fill:both) 우리가 넣는 스케일 transform 을
+     덮어씁니다. 데스크톱에서는 transform 없는 페이드로 바꿔 스케일이 유지되게 합니다. */
+  .shell{width:min(800px,94vw);transform-origin:top center;will-change:transform;
+         backface-visibility:hidden;animation:fadeIn .5s ease-out both}
+}
+
 </style>
 </head>
 <body>
@@ -340,7 +357,7 @@ h2{letter-spacing:0}
   <main class="shell">
     <div class="corners"></div>
     <div class="topbar">
-      <button class="iconbtn" onclick="menu()" aria-label="메뉴">☰</button>
+      <button class="iconbtn menubtn" onclick="menu()" aria-label="메뉴 · 설정 · 향기 목록">☰<span class="mlabel">메뉴</span></button>
       <div class="crest">☾ ✦ ☽</div>
       <button class="iconbtn" onclick="help()" aria-label="도움말">?</button>
     </div>
@@ -1096,6 +1113,35 @@ function localAnswer(){
   const end=`마지막 ${c.ko}는 앞으로의 태도를 알려줘요. ${meaning(c)}. 정답을 정하기보다, 오늘 할 수 있는 작은 것 하나를 골라 보면 어떨까요?`;
   return `${open} ${mid} ${end}`;
 }
+
+/* ── 화면 맞춤 ──────────────────────────────
+   데스크톱·태블릿(가로 701px 이상)에서는 액자 전체를 뷰포트 크기에 맞춰
+   축소해, 어느 단계에서도 스크롤 없이 한 화면에 담기도록 합니다.
+   모바일(700px 이하)에서는 손대지 않고 기존처럼 스크롤로 봅니다. */
+(function(){
+  const shell=document.querySelector(".shell");
+  if(!shell)return;
+  const MARGIN=14;
+  function fit(){
+    // 모바일은 제외 — 원래대로
+    if(window.matchMedia("(max-width:700px)").matches){shell.style.transform="";return}
+    shell.style.transform="";                 // 원래 크기로 되돌려 실측
+    const natH=shell.offsetHeight, natW=shell.offsetWidth;
+    if(!natH)return;
+    const availH=window.innerHeight-MARGIN*2, availW=window.innerWidth-MARGIN*2;
+    const s=Math.min(availH/natH, availW/natW, 1);
+    const offY=Math.max(MARGIN,(window.innerHeight-natH*s)/2);
+    shell.style.transform="translateY("+offY+"px) scale("+s+")";
+  }
+  let raf;
+  function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(fit)}
+  window.addEventListener("resize",schedule);
+  window.addEventListener("orientationchange",schedule);
+  // 단계 전환·대화 추가 등 내용 높이가 바뀔 때마다 자동으로 다시 맞춤
+  if(window.ResizeObserver)new ResizeObserver(schedule).observe(shell);
+  window.addEventListener("load",schedule);
+  schedule();
+})();
 
 </script>
 </body></html>
