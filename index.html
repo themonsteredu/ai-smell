@@ -136,6 +136,14 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
 .poster img{width:100%;display:block}
 .poster .start{position:absolute;left:16%;width:68%;top:85.3%;height:7.6%;border:0;padding:0;background:transparent;transition:all .35s ease}
 .poster:hover .start,.poster .start:focus-visible{background:rgba(255,245,220,.15);box-shadow:0 0 34px rgba(207,174,98,.55)}
+/* 표지 이미지 속 옛 제목을 가리고 새 제목을 얹는 '명판' */
+.cover-title{position:absolute;left:7.5%;right:7.5%;top:14.5%;height:19.5%;
+  display:flex;align-items:center;justify-content:center;text-align:center;line-height:0;
+  background:linear-gradient(180deg,#f1e8ce,#ebe0c2);
+  border:1px solid rgba(176,141,60,.7);border-radius:3px;
+  box-shadow:0 0 0 5px #efe5cb, 0 0 0 6px rgba(176,141,60,.28), 0 8px 22px rgba(60,45,20,.14)}
+.cover-title span{font-family:var(--serif);color:var(--navy);line-height:1.44;letter-spacing:.5px;
+  font-size:clamp(19px,4.3vw,32px)}
 
 /* ── 도움말 ────────────────────────────── */
 .help{position:fixed;inset:0;z-index:200;background:rgba(20,25,40,.55);display:grid;place-items:center;padding:20px;animation:fadeIn .25s ease both}
@@ -284,7 +292,9 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
 body.on-hero .masthead{display:none}
 body.on-hero .progress{padding-top:16px}
 body.on-hero .content{padding-top:0}
-.hero{margin:0 0 4px;line-height:0}
+.hero{margin:0 0 4px;line-height:0;position:relative}
+/* hero.jpg 는 표지와 제목 위치가 조금 달라 명판 위치를 따로 맞춤 */
+.hero .cover-title{top:15%;height:21.5%;left:9%;right:9%}
 .hero img{width:100%;display:block}
 body.on-hero .panel{border-top-width:1px;margin-top:-1px}
 
@@ -850,16 +860,20 @@ function render(){
   scrollUp();
 }
 
+/* 표지에 얹는 제목 — 이 문구만 바꾸면 표지 제목이 바뀝니다.
+   (이미지 속 옛 제목은 아래 .cover-title 패널이 가립니다) 줄바꿈은 <br> */
+const COVER_TITLE="내 마음을 감싸는<br>위로의 향기";
 function coverScreen(){
   screenEl.className="content cover";
   screenEl.innerHTML=`<div class="poster" onclick="start()">
-    <img src="${COVER}" alt="나의 향기, 나를 다독여주는, 위로하는 향기">
+    <img src="${COVER}" alt="표지">
+    <div class="cover-title"><span>${COVER_TITLE}</span></div>
     <button class="start" aria-label="시작하기"></button></div>`;
 }
 
 function colorScreen(){
   screenEl.innerHTML=twoPane(
-    `<div class="hero"><img src="${HERO}" alt="나의 향기, 나를 다독여주는, 위로하는 향기"></div>`,
+    `<div class="hero"><img src="${HERO}" alt="표지 그림"><div class="cover-title"><span>${COVER_TITLE}</span></div></div>`,
     panel(head(1,"나의 현재 감정 색",
       "지금 내 마음에 가장 가까운 색을 하나 골라 보세요. 색은 리딩의 결론이 아니라, 현재 에너지를 보완하는 배경 정보로만 사용합니다.")
      +`<div class="rows">${colors.map((c,i)=>row(c[0],"",state.color===c[0],`setColor(${i})`,c[1])).join("")}</div>`)
