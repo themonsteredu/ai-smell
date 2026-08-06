@@ -829,11 +829,16 @@ async function testKey(){
 }
 
 /* ── 화면 전환 ─────────────────────────── */
+let lastRenderedStep=null;
 function render(){
+  // 단계가 실제로 바뀔 때만 맨 위로 스크롤(같은 단계에서 색·주제만 고를 땐 그대로 둠)
+  const stepChanged=state.step!==lastRenderedStep;
+  lastRenderedStep=state.step;
+  const scrollUp=()=>{if(stepChanged)window.scrollTo({top:0,behavior:"smooth"})};
   const onCover=state.step===-1;
   document.body.classList.toggle("on-cover",onCover);
   document.body.classList.toggle("on-hero",state.step===0);
-  if(onCover){coverScreen();window.scrollTo({top:0,behavior:"smooth"});return}
+  if(onCover){coverScreen();scrollUp();return}
   const names=["s-color","s-topic","s-draw","s-reading","s-scent"];
   screenEl.className="content "+(names[state.step]||"");
   prog();
@@ -842,7 +847,7 @@ function render(){
   else if(state.step===2)drawScreen();
   else if(state.step===3)readingScreen();
   else scentScreen();
-  window.scrollTo({top:0,behavior:"smooth"});
+  scrollUp();
 }
 
 function coverScreen(){
@@ -988,12 +993,29 @@ window.addEventListener("resize",()=>{if(state.step===2&&!locked&&!picking)layou
 /* ── STEP 04 / 05 ──────────────────────── */
 function meaning(c){return c.rev?c.down:c.up}
 
+/* 처음에 고른 감정 색의 의미 — 리딩에 이어지도록 사용 */
+const COLOR_MEANING={
+  "빨강":"하고 싶은 것이 뚜렷하고 마음속 에너지가 강한 때예요. 그 열정을 좋은 방향으로 써 보면 좋겠어요.",
+  "주황":"사람들과 어울리고 싶고 활기를 찾고 싶은 마음이 담겨 있어요. 따뜻하게 먼저 다가가 봐도 좋아요.",
+  "노랑":"밝은 기대와 즐거움을 찾고 싶은 마음이에요. 작은 즐거움부터 하나씩 챙겨 보면 어떨까요.",
+  "초록":"조금 쉬어가며 마음을 회복하고 싶은 때예요. 무리하지 말고 안정을 먼저 찾아보세요.",
+  "파랑":"마음을 차분히 가라앉히고 정리하고 싶은 상태예요. 천천히 생각을 정돈해 보면 좋겠어요.",
+  "남색":"혼자만의 시간과 깊은 생각이 필요한 마음이에요. 조용히 나를 들여다보는 시간이 도움이 될 수 있어요.",
+  "보라":"마음이 섬세하고 상상이 많아지는 때예요. 떠오르는 감정을 부드럽게 살펴보면 좋겠어요.",
+  "분홍":"다정함을 나누고 사랑받고 싶은 마음이 담겨 있어요. 가까운 사람에게 마음을 표현해 봐도 좋아요.",
+  "회색":"잠시 거리를 두고 조용히 있고 싶은 마음이에요. 지금은 무리해서 밝아지지 않아도 괜찮아요."
+};
+
 function makeReading(){
   const [a,b,c]=state.draw;
-  state.reading=`<p><b>현재 상황 — ${a.ko} ${a.rev?"역방향":"정방향"}</b><br>${meaning(a)}. ${state.topic}이라는 주제에서 지금은 이 카드의 에너지가 가장 앞에 나타납니다.</p>
+  const colorPart=state.color
+    ? `<p><b>내가 고른 색 — ${state.color}</b><br>${COLOR_MEANING[state.color]||"지금의 마음을 담은 색이에요."} 이 색이 보여 주는 마음을 배경에 두고 세 카드를 읽어 볼게요.</p>\n`
+    : "";
+  const colorTie=state.color?` 처음에 고른 ${state.color} 색이 말해 주는 마음도 이 흐름과 자연스럽게 이어져 있어요.`:"";
+  state.reading=colorPart+`<p><b>현재 상황 — ${a.ko} ${a.rev?"역방향":"정방향"}</b><br>${meaning(a)}. ${state.topic}이라는 주제에서 지금은 이 카드의 에너지가 가장 앞에 나타납니다.</p>
 <p><b>보이지 않는 영향 — ${b.ko} ${b.rev?"역방향":"정방향"}</b><br>${meaning(b)}. 겉으로 드러난 고민보다 이 부분이 마음속 판단과 반응에 더 크게 영향을 주고 있을 수 있습니다.</p>
 <p><b>앞으로 취할 태도 — ${c.ko} ${c.rev?"역방향":"정방향"}</b><br>${meaning(c)}. 이 카드는 미래를 단정하는 것이 아니라, 지금 선택할 수 있는 태도와 방향을 보여줍니다.</p>
-<p><b>세 카드의 흐름</b><br>${combine(a,b,c)} ${state.note?`"${state.note}"라는 고민에서는 결과를 서두르기보다 카드가 보여준 흐름을 기준으로 작은 행동 하나를 정하는 것이 좋겠습니다.`:"지금은 정답을 맞히기보다, 세 카드가 공통으로 말하는 흐름을 알아차리는 것이 중요합니다."}</p>`;
+<p><b>세 카드의 흐름</b><br>${combine(a,b,c)} ${state.note?`"${state.note}"라는 고민에서는 결과를 서두르기보다 카드가 보여준 흐름을 기준으로 작은 행동 하나를 정하는 것이 좋겠습니다.`:"지금은 정답을 맞히기보다, 세 카드가 공통으로 말하는 흐름을 알아차리는 것이 중요합니다."}${colorTie}</p>`;
   state.scents=pickScents();
 }
 
