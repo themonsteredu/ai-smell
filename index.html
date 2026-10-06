@@ -4,6 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#e6dcc4">
 <title>마음의 향기 타로</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
 @font-face{
   font-family:'BMDOHYEON';
@@ -58,7 +59,7 @@ button:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outlin
 .crest{flex:1;text-align:center;color:var(--gold);font-size:15px;letter-spacing:.5em;opacity:.85}
 
 .masthead{text-align:center;padding:14px 30px 0;position:relative;z-index:45}
-h1{font-family:var(--serif);font-size:clamp(28px,5vw,42px);font-weight:600;margin:0;color:var(--navy);letter-spacing:1px;line-height:1.32}
+h1{font-family:var(--serif);font-size:clamp(28px,5vw,42px);margin:0;color:var(--navy);letter-spacing:1px;line-height:1.32}
 .sub{color:var(--ink-soft);margin-top:12px;font-size:13.5px;line-height:1.7}
 
 .progress{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:22px 30px 0;position:relative;z-index:45}
@@ -75,7 +76,7 @@ h1{font-family:var(--serif);font-size:clamp(28px,5vw,42px);font-weight:600;margi
 .divider span:before{left:0}.divider span:after{right:0}
 .divider em{font-style:normal;opacity:.7}
 
-h2{font-family:var(--serif);font-size:clamp(24px,4vw,34px);font-weight:600;margin:0 0 14px;color:var(--navy);letter-spacing:.5px;text-align:center}
+h2{font-family:var(--serif);font-size:clamp(24px,4vw,34px);margin:0 0 14px;color:var(--navy);letter-spacing:.5px;text-align:center}
 .lead{color:var(--ink-soft);line-height:1.85;font-size:13.5px;text-align:center;max-width:620px;margin:0 auto}
 
 .mark{text-align:center;color:var(--gold);font-size:13px;margin-top:30px;opacity:.75}
@@ -95,7 +96,7 @@ h2{font-family:var(--serif);font-size:clamp(24px,4vw,34px);font-weight:600;margi
 .orb{width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:15px}
 .orb i{width:11px;height:11px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px rgba(176,141,60,.18)}
 .rowtext{flex:1;min-width:0}
-.rowtext strong{display:block;font-family:var(--serif);font-size:16.5px;font-weight:600;color:var(--navy)}
+.rowtext strong{display:block;font-family:var(--serif);font-size:16.5px;color:var(--navy)}
 .rowtext .desc{display:block;color:var(--ink-soft);font-size:12.5px;line-height:1.5;margin-top:4px}
 .chev{color:var(--gold);font-size:20px;line-height:1;opacity:.8}
 
@@ -145,14 +146,6 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
 .cover-title span{font-family:var(--serif);color:var(--navy);line-height:1.44;letter-spacing:.5px;
   font-size:clamp(19px,4.3vw,32px)}
 
-/* ── 도움말 ────────────────────────────── */
-.help{position:fixed;inset:0;z-index:200;background:rgba(20,25,40,.55);display:grid;place-items:center;padding:20px;animation:fadeIn .25s ease both}
-.helpbox{max-width:440px;width:100%;background:var(--tile);border:1.5px solid var(--gold);padding:32px 28px;position:relative;max-height:86vh;overflow:auto}
-.helpbox:before{content:"";position:absolute;inset:7px;border:1px solid var(--line);pointer-events:none}
-.helpbox h3{font-family:var(--serif);text-align:center;color:var(--navy);margin:0 0 4px;font-size:22px}
-.helpbox ol{margin:20px 0 0;padding-left:20px;color:var(--ink-soft);font-size:13.5px;line-height:1.9}
-.helpbox ol b{color:var(--navy)}
-
 /* ── 카드 테이블 ────────────────────────── */
 .tarot-room{
   position:relative;height:520px;margin-top:24px;overflow:hidden;border:1.5px solid var(--gold);
@@ -193,7 +186,7 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
 .slot .lbl{color:var(--gold);font-weight:700;letter-spacing:.16em;font-size:10.5px;display:block;margin-bottom:6px}
 .slot.filled{border-color:var(--gold);background:#fffdf6;animation:pop .45s cubic-bezier(.2,1.2,.4,1)}
 .slot img{width:56px;height:96px;object-fit:cover;flex:0 0 56px;box-shadow:0 3px 10px rgba(60,45,20,.28)}
-.slot strong{display:block;font-family:var(--serif);font-size:19px;font-weight:600;color:var(--navy);margin-bottom:3px}
+.slot strong{display:block;font-family:var(--serif);font-size:19px;color:var(--navy);margin-bottom:3px}
 .slot .ori{color:var(--ink-soft);font-size:12.5px}
 .slot.pending{border-color:var(--gold);color:var(--gold);background:rgba(176,141,60,.08)}
 .slot.pending .dots:after,.status .dots:after{content:"";animation:dots 1.1s steps(4,end) infinite}
@@ -211,7 +204,7 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
 .result .lbl{color:var(--ink-soft);font-size:12px;display:block;margin-bottom:10px}
 .result img{width:76px;height:130px;object-fit:cover;flex:0 0 76px;box-shadow:0 3px 12px rgba(60,45,20,.28)}
 .result.rev img{transform:rotate(180deg)}
-.result h3{font-family:var(--serif);font-size:22px;margin:0 0 4px;font-weight:600;color:var(--navy)}
+.result h3{font-family:var(--serif);font-size:22px;margin:0 0 4px;color:var(--navy)}
 .result p{color:var(--ink-soft);font-size:13px;margin:0}
 .reading{border:1px solid var(--line);padding:26px;background:rgba(255,253,246,.7);line-height:1.95;position:relative}
 .reading:before{content:"";position:absolute;inset:5px;border:1px solid var(--line-soft);pointer-events:none}
@@ -225,7 +218,7 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
 .scent:before{content:"✦";position:absolute;top:12px;left:0;right:0;color:var(--gold);font-size:10px}
 .scent:hover{border-color:var(--gold);background:#fffdf6;box-shadow:0 8px 22px rgba(60,45,20,.12)}
 .scent small{color:var(--gold);display:block;margin:14px 0 6px;font-weight:700;letter-spacing:.22em;font-size:9.5px}
-.scent h3{font-family:var(--serif);font-size:26px;margin:6px 0 12px;font-weight:600;color:var(--navy)}
+.scent h3{font-family:var(--serif);font-size:26px;margin:6px 0 12px;color:var(--navy)}
 .scent p{color:var(--ink-soft);font-size:13px;line-height:1.65;margin:0}
 
 .notice{color:var(--ink-soft);font-size:12.5px;margin-top:20px;line-height:1.75;padding:14px 18px;border-left:2px solid var(--gold);background:rgba(176,141,60,.07)}
@@ -248,14 +241,6 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
   .result img{width:64px;height:110px;flex:0 0 64px}
   .result h3{font-size:19px}
 }
-
-/* ── 추가 질문 ─────────────────────────── */
-.ask{margin-top:34px}
-.ask .lead{margin-bottom:0}
-.qa{border:1px solid var(--line);border-left:2px solid var(--gold);padding:16px 18px;margin-top:12px;background:rgba(255,253,246,.62)}
-.qa .qtext{margin:0 0 10px;font-family:var(--serif);color:var(--navy);font-size:14.5px;line-height:1.6}
-.qa .qtext:before{content:"묻기 · ";color:var(--gold);font-family:var(--sans);font-size:10.5px;letter-spacing:.16em;font-weight:700}
-.qa .atext{margin:0;color:var(--ink);font-size:13.5px;line-height:1.9;white-space:pre-wrap}
 
 /* ── 안쪽 액자 (목업의 STEP 패널) ────────── */
 .panel{border:1px solid var(--line);padding:clamp(20px,3.5vw,30px) clamp(16px,3vw,26px);background:rgba(255,253,246,.42);position:relative}
@@ -282,9 +267,8 @@ body.on-cover .topbar .crest,body.on-cover .topbar .iconbtn{color:#8a6f36;border
 .pickrow{display:flex;gap:10px;margin-top:10px}
 .pickrow button{flex:1;border:1px solid var(--line);background:rgba(255,253,246,.6);color:var(--ink);padding:12px 8px;font-size:12.5px;line-height:1.5;transition:all .25s ease}
 .pickrow button strong{display:block;font-family:var(--serif);font-size:15px;color:var(--navy);margin-bottom:3px}
-.pickrow button.on{background:var(--navy);border-color:var(--navy)}
+.pickrow button.on{background:var(--navy);border-color:var(--navy);color:rgba(233,215,166,.7)}
 .pickrow button.on strong{color:var(--gold-pale)}
-.pickrow button.on{color:rgba(233,215,166,.7)}
 .warn{margin-top:20px;font-size:12px;line-height:1.75;color:var(--ink-soft);padding:13px 15px;border-left:2px solid #9c3b2e;background:rgba(156,59,46,.06)}
 .warn b{color:#9c3b2e}
 
@@ -423,7 +407,6 @@ h2{letter-spacing:0}
 
   /* ── 이미지 크게 ── */
   .result img{width:106px;height:182px;flex:0 0 106px}
-  .result.rev img{transform:rotate(180deg)}
   .slot img{width:72px;height:124px;flex:0 0 72px}
 }
 
@@ -458,116 +441,34 @@ h2{letter-spacing:0}
     <div class="content" id="screen"></div>
   </main>
 </div>
+<script src="content.js"></script>
 <script>
-const IMG   = {
-"바보": "cards/01.jpg",
-"마법사": "cards/02.jpg",
-"여사제": "cards/03.jpg",
-"여제": "cards/04.jpg",
-"황제": "cards/05.jpg",
-"연인": "cards/06.jpg",
-"전차": "cards/07.jpg",
-"힘": "cards/08.jpg",
-"은둔자": "cards/09.jpg",
-"운명의 수레바퀴": "cards/10.jpg",
-"정의": "cards/11.jpg",
-"매달린 사람": "cards/12.jpg",
-"죽음": "cards/13.jpg",
-"절제": "cards/14.jpg",
-"악마": "cards/15.jpg",
-"탑": "cards/16.jpg",
-"별": "cards/17.jpg",
-"달": "cards/18.jpg",
-"태양": "cards/19.jpg",
-"심판": "cards/20.jpg",
-"세계": "cards/21.jpg",
-"교황": "cards/22.jpg",
-"열쇠": "cards/23.jpg",
-"물고기": "cards/24.jpg",
-"닻": "cards/25.jpg",
-"십자가": "cards/26.jpg",
-"정원": "cards/27.jpg",
-"검 6": "cards/28.jpg",
-"컵 에이스": "cards/29.jpg",
-"컵 2": "cards/30.jpg",
-"컵 3": "cards/31.jpg",
-"컵 4": "cards/32.jpg",
-"컵 5": "cards/33.jpg",
-"컵 6": "cards/34.jpg",
-"컵 7": "cards/35.jpg",
-"컵 8": "cards/36.jpg",
-"컵 9": "cards/37.jpg",
-"컵 10": "cards/38.jpg",
-"컵 페이지": "cards/39.jpg",
-"컵 기사": "cards/40.jpg",
-"컵 퀸": "cards/41.jpg",
-"컵 킹": "cards/42.jpg"
-};
-const COVER = "cards/cover.jpg";
-const BACK  = "cards/back.jpg";
-const HERO  = "cards/hero.jpg";
+/* 수업 내용(카드·주제·색·향기)은 content.js 에 있습니다 */
+const {COVER,BACK,HERO,COVER_TITLE,topics,colors,roles,COLOR_MEANING,deckPool,MOODS,MOOD_DESC,SCENT_MOOD,DEFAULT_SCENTS}=CONTENT;
 document.documentElement.style.setProperty("--back","url("+BACK+")");
-</script>
-<script>
+
 const progressEl=document.getElementById("progress");
 const screenEl=document.getElementById("screen");
-const mastEl=document.getElementById("masthead");
 
 let state={step:-1,color:null,topic:null,note:"",draw:[],reading:"",scents:[]};
-let deck=null,locked=true,picking=false;
+let deck=null,locked=true,picking=false,needLayout=false;
+const FAN_MAX=36;   // 부채꼴에 펼치는 최대 장수 (실제로는 숨기지 않은 카드 수와 36 중 작은 값)
 
-const FAN_N=36;
-const topics=[["나 자신","요즘 나의 상태와 마음"],["친구 관계","관계에서 느끼는 거리와 기대"],["가족","가족에게 표현하지 못한 마음"],["공부와 도전","부담, 자신감, 앞으로의 방향"],["새로운 시작","변화 앞에서의 기대와 걱정"],["지금의 기분","이유를 설명하기 어려운 현재의 마음"]];
-const colors=[["빨강","#b0392c"],["주황","#c8762c"],["노랑","#cfa42c"],["초록","#4f7a46"],["파랑","#2f5f86"],["남색","#2a3a6b"],["보라","#6b4a80"],["분홍","#c07a8e"],["회색","#7b7970"]];
-const roles=["현재 상황","보이지 않는 영향","앞으로 취할 태도"];
+/* 추가 질문 상태 — chatLog 는 화면에 보이는 대화(학생이 쓴 그대로), chatHistory 는 AI에 보내는 대화 */
+let askCount=0,chatHistory=[],chatLog=[],asking=false;
+const ASK_LIMIT=3;
 
-const cards=[
-{ko:"바보",up:"새로운 시작, 가능성, 가벼운 용기",down:"성급함, 불안정, 준비되지 않은 시작",scent:["레몬","자몽","민트"]},
-{ko:"마법사",up:"집중, 실행력, 가진 능력의 활용",down:"자신감 부족, 산만함, 능력을 믿지 못함",scent:["로즈마리","오렌지","편백"]},
-{ko:"여사제",up:"직관, 내면의 목소리, 조용한 관찰",down:"혼란, 감정 억압, 자기 마음을 피함",scent:["라벤더","로즈","코튼"]},
-{ko:"여제",up:"돌봄, 풍요, 감각적 안정",down:"지침, 과도한 돌봄, 자기 돌봄 부족",scent:["바닐라","로즈","만다린"]},
-{ko:"황제",up:"질서, 책임, 안정적인 기준",down:"통제, 완고함, 부담스러운 규칙",scent:["시더우드","편백","로즈마리"]},
-{ko:"연인",up:"관계, 선택, 가치의 일치",down:"갈등, 거리감, 선택의 혼란",scent:["로즈","오렌지","베르가못"]},
-{ko:"전차",up:"의지, 전진, 감정의 조절",down:"방향 상실, 과도한 밀어붙임, 피로",scent:["민트","로즈마리","자몽"]},
-{ko:"힘",up:"부드러운 용기, 인내, 자기 신뢰",down:"위축, 자신감 저하, 감정에 압도됨",scent:["오렌지","시더우드","바닐라"]},
-{ko:"은둔자",up:"성찰, 혼자만의 시간, 내적 방향",down:"고립, 지나친 생각, 도움을 피함",scent:["편백","라벤더","시더우드"]},
-{ko:"운명의 수레바퀴",up:"변화, 흐름, 새로운 국면",down:"반복, 변화에 대한 저항, 통제 불가",scent:["베르가못","레몬","유칼립투스"]},
-{ko:"정의",up:"균형, 사실 확인, 책임 있는 판단",down:"불공정함, 자기비판, 한쪽으로 치우침",scent:["편백","로즈마리","코튼"]},
-{ko:"매달린 사람",up:"멈춤, 관점 전환, 기다림",down:"정체, 답답함, 놓지 못함",scent:["라벤더","코튼","베르가못"]},
-{ko:"죽음",up:"끝과 전환, 정리, 새로운 단계",down:"변화 거부, 미련, 익숙한 것에 머묾",scent:["유칼립투스","편백","레몬"]},
-{ko:"절제",up:"조화, 회복, 적절한 속도",down:"과함, 감정 기복, 균형 회복 필요",scent:["라벤더","베르가못","코튼"]},
-{ko:"악마",up:"끊기 어려운 습관, 강한 끌림에 묶임",down:"묶임에서 풀려남, 스스로 선택하기 시작함",scent:["유칼립투스","민트","시더우드"]},
-{ko:"탑",up:"갑작스러운 깨달음, 기존 생각의 붕괴",down:"변화를 피함, 긴장 누적, 불안정",scent:["유칼립투스","민트","시더우드"]},
-{ko:"별",up:"희망, 회복, 미래에 대한 신뢰",down:"실망, 기대 저하, 자신감 회복 필요",scent:["만다린","라벤더","베르가못"]},
-{ko:"달",up:"불확실함, 예민함, 숨은 감정",down:"혼란이 걷힘, 두려움 직면, 진실 발견",scent:["라벤더","코튼","로즈"]},
-{ko:"태양",up:"명료함, 기쁨, 활력과 자신감",down:"기쁨이 가려짐, 피로, 기대에 못 미침",scent:["오렌지","레몬","만다린"]},
-{ko:"심판",up:"깨달음, 다시 시작할 결정, 자기 수용",down:"후회, 자기 판단, 결정을 미룸",scent:["로즈마리","편백","베르가못"]},
-{ko:"세계",up:"완성, 통합, 한 단계의 마무리",down:"미완성, 마무리 부족, 다음 단계 지연",scent:["시더우드","오렌지","코튼"]},
-{ko:"교황",up:"배움, 기준과 조언, 믿을 만한 어른",down:"형식에 대한 부담, 나만의 기준을 찾는 중",scent:["시더우드","로즈마리","코튼"]},
-{ko:"열쇠",up:"닫혀 있던 것이 열림, 해답을 찾음, 확신",down:"아직 열리지 않음, 방법을 찾는 중",scent:["로즈마리","레몬","민트"]},
-{ko:"물고기",up:"풍요로운 흐름, 자유롭게 움직이는 마음",down:"흐름이 막힘, 조급함과 불안",scent:["베르가못","만다린","자몽"]},
-{ko:"닻",up:"안정, 흔들리지 않는 자리, 꾸준함",down:"머무름이 길어짐, 벗어나기 어려움",scent:["시더우드","편백","코튼"]},
-{ko:"십자가",up:"짊어진 무게, 지나가야 할 시간, 의미 찾기",down:"짐을 내려놓음, 시련이 끝나감",scent:["라벤더","편백","유칼립투스"]},
-{ko:"정원",up:"사람들과 어울림, 열린 마음, 함께하는 자리",down:"혼자 있고 싶음, 무리 속에서의 외로움",scent:["로즈","오렌지","만다린"]},
-{ko:"검 6",up:"어려움에서 벗어남, 조용한 이동",down:"떠나기 어려움, 같은 자리를 맴돎",scent:["베르가못","편백","코튼"]},
-{ko:"컵 에이스",up:"마음이 열림, 새로운 감정의 시작",down:"감정을 표현하지 못함, 마음이 닫힘",scent:["로즈","만다린","코튼"]},
-{ko:"컵 2",up:"서로를 향한 이해, 마음이 통하는 관계",down:"오해, 관계의 균형이 흔들림",scent:["로즈","베르가못","바닐라"]},
-{ko:"컵 3",up:"함께 나누는 기쁨, 친구들과의 시간",down:"소외감, 어울리기 어려운 마음",scent:["오렌지","만다린","자몽"]},
-{ko:"컵 4",up:"시들함, 눈앞의 것에 마음이 가지 않음",down:"다시 관심이 생김, 내민 손을 받아들임",scent:["민트","베르가못","라벤더"]},
-{ko:"컵 5",up:"아쉬움과 상실, 남아 있는 것을 보지 못함",down:"회복의 시작, 남은 것을 다시 봄",scent:["라벤더","코튼","로즈"]},
-{ko:"컵 6",up:"추억, 익숙한 따뜻함, 순수한 마음",down:"과거에 머묾, 앞으로 나아가기 어려움",scent:["바닐라","코튼","만다린"]},
-{ko:"컵 7",up:"여러 갈래의 상상, 무엇을 고를지 모름",down:"환상이 걷힘, 현실적인 선택",scent:["유칼립투스","라벤더","베르가못"]},
-{ko:"컵 8",up:"떠남, 익숙한 것을 두고 가는 선택",down:"미련, 떠나지 못하는 마음",scent:["편백","라벤더","유칼립투스"]},
-{ko:"컵 9",up:"만족, 바라던 것을 얻은 기쁨",down:"겉으로만 만족함, 채워지지 않는 마음",scent:["오렌지","바닐라","만다린"]},
-{ko:"컵 10",up:"충만함, 안정된 관계, 마음의 평화",down:"기대와 현실의 차이, 겉으로만 괜찮음",scent:["로즈","오렌지","바닐라"]},
-{ko:"컵 페이지",up:"새로운 감정에 대한 호기심, 솔직한 표현",down:"감정을 숨김, 서툰 표현",scent:["만다린","코튼","레몬"]},
-{ko:"컵 기사",up:"마음을 담아 다가감, 진심 어린 제안",down:"말과 행동이 다름, 기분에 휘둘림",scent:["베르가못","로즈","오렌지"]},
-{ko:"컵 퀸",up:"깊은 공감, 마음을 알아주는 사람",down:"감정에 잠김, 나와 남의 경계가 흐려짐",scent:["로즈","라벤더","바닐라"]},
-{ko:"컵 킹",up:"감정을 다스림, 흔들림 속의 침착함",down:"감정을 억누름, 속마음을 감춤",scent:["시더우드","베르가못","코튼"]}
-];
+/* gen: 학생(뽑기) 세대 번호. 처음부터·다시 뽑기·다시 섞기·카드 단계의 이전에서 1씩 올라가고,
+   그 전에 걸어 둔 타이머(later)와 늦게 도착한 AI 답은 번호가 달라 그냥 버려집니다. */
+let gen=0,timers=[],navAt=0;
+function later(fn,ms){const g=gen;timers.push(setTimeout(()=>{if(g===gen)fn()},ms))}
+function cancelTimers(){timers.forEach(clearTimeout);timers=[]}
+/* 화면 이동 버튼을 빠르게 두 번 눌러 단계를 건너뛰지 않도록 450ms 안의 두 번째 이동은 무시 */
+function navOk(){const t=Date.now();if(t-navAt<450)return false;navAt=t;return true}
 
-const img=(c,extra="")=>`<img src="${IMG[c.ko]}" alt="${c.ko}" ${extra}>`;
-const shuffled=a=>[...a].sort(()=>Math.random()-.5);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const img=(c,extra="")=>`<img src="${c.img}" alt="${c.ko}" ${extra}>`;
+function shuffled(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 
 /* ── 공통 조각 ─────────────────────────── */
 const divider=t=>`<div class="divider"><span>${t}</span></div>`;
@@ -585,59 +486,23 @@ function row(label,desc,sel,onclick,color){
 
 function prog(){let h="";for(let i=0;i<5;i++)h+=`<span class="${i<=state.step?"on":""}"></span>`;progressEl.innerHTML=h}
 function saveNote(){const t=document.getElementById("note");if(t)state.note=t.value}
-function next(){saveNote();state.step++;render()}
-function prev(){saveNote();state.step--;render()}
+function next(){if(state.step>=4||!navOk())return;saveNote();state.step++;render()}
+function prev(){if(!navOk())return;saveNote();state.step--;render()}
 function setColor(i){state.color=colors[i][0];render()}
 function setTopic(i){saveNote();state.topic=topics[i][0];render()}
-function restart(){state={step:-1,color:null,topic:null,note:"",draw:[],reading:"",scents:[]};deck=null;askCount=0;chatHistory=[];render()}
-function redraw(){state.draw=[];deck=null;askCount=0;chatHistory=[];state.step=2;render()}
-function start(){state.step=0;render()}
-function toCover(){state.step=-1;render()}
-
+/* 카드·리딩·대화를 모두 비움. gen 이 바뀌어 진행 중이던 뒤집기 타이머와 AI 답도 버려집니다 */
+function clearDraw(){
+  gen++;cancelTimers();
+  deck=null;locked=true;picking=false;needLayout=false;
+  state.draw=[];state.reading="";state.scents=[];
+  askCount=0;chatHistory=[];chatLog=[];asking=false;
+}
+/* 처음부터(표지로) — 다음 학생에게 앞 학생의 색·주제·고민·카드·대화가 남지 않도록 전부 지움 */
+function restart(){if(!navOk())return;clearDraw();state={step:-1,color:null,topic:null,note:"",draw:[],reading:"",scents:[]};render()}
+function redraw(){if(!navOk())return;clearDraw();state.step=2;render()}
+function start(){if(!navOk())return;state.step=0;render()}
 
 /* ══════════════ 향기 목록 ══════════════ */
-/* 카드는 '향기의 결'로 연결됩니다. 원장님이 향기 이름을 바꾸셔도
-   결만 맞춰 두면 카드와 자동으로 이어집니다. */
-const MOODS=[
-  ["bright","밝음 · 활력"],
-  ["fresh","환기 · 시원함"],
-  ["focus","집중 · 방향"],
-  ["ground","안정 · 중심"],
-  ["calm","진정 · 편안"],
-  ["warm","위로 · 포근"],
-  ["balance","균형"]
-];
-const MOOD_DESC={
-  bright:"기분을 밝게 끌어올리는 향기",
-  fresh:"복잡한 생각 사이에 공간을 만드는 향기",
-  focus:"방향과 집중을 다시 세우는 향기",
-  ground:"흔들릴 때 중심을 잡아 주는 향기",
-  calm:"속도를 낮추고 마음을 가라앉히는 향기",
-  warm:"스스로를 다독이는 포근한 향기",
-  balance:"밝음과 차분함 사이의 균형을 잡는 향기"
-};
-/* 카드에 적힌 기본 향기 → 결 */
-const SCENT_MOOD={레몬:"bright",자몽:"bright",오렌지:"bright",만다린:"bright",
-  민트:"fresh",유칼립투스:"fresh",로즈마리:"focus",편백:"ground",시더우드:"ground",
-  라벤더:"calm",코튼:"calm",로즈:"warm",바닐라:"warm",베르가못:"balance"};
-
-const DEFAULT_SCENTS=[
-  {name:"레몬",mood:"bright",desc:"생각을 가볍게 환기하는 밝은 시트러스 이미지"},
-  {name:"자몽",mood:"bright",desc:"막힌 흐름을 전환하는 생기 있는 이미지"},
-  {name:"오렌지",mood:"bright",desc:"따뜻함과 자신감을 연결하는 밝은 이미지"},
-  {name:"만다린",mood:"bright",desc:"부드러운 활력과 회복을 떠올리는 이미지"},
-  {name:"민트",mood:"fresh",desc:"복잡한 생각 사이에 공간을 만드는 시원한 이미지"},
-  {name:"유칼립투스",mood:"fresh",desc:"답답한 흐름을 열어주는 맑은 공기 이미지"},
-  {name:"로즈마리",mood:"focus",desc:"방향과 집중을 다시 세우는 또렷한 허브 이미지"},
-  {name:"편백",mood:"ground",desc:"흔들릴 때 중심을 잡는 숲의 이미지"},
-  {name:"시더우드",mood:"ground",desc:"기준과 안정감을 세우는 단단한 나무 이미지"},
-  {name:"라벤더",mood:"calm",desc:"속도를 낮추고 내면을 바라보는 차분한 이미지"},
-  {name:"코튼",mood:"calm",desc:"안전하고 편안한 공간을 떠올리는 이미지"},
-  {name:"로즈",mood:"warm",desc:"관계와 감정을 부드럽게 표현하는 이미지"},
-  {name:"바닐라",mood:"warm",desc:"스스로를 다독이는 포근한 이미지"},
-  {name:"베르가못",mood:"balance",desc:"밝음과 차분함 사이의 균형 이미지"}
-];
-
 function scentLib(){
   const c=loadCfg();
   return (Array.isArray(c.scents)&&c.scents.length)?c.scents:DEFAULT_SCENTS;
@@ -725,10 +590,16 @@ function resetScents(){
 
 /* API 키는 이 기기의 브라우저에만 저장됩니다. 앱 파일에는 들어가지 않습니다. */
 const CFG_KEY="maum_tarot_cfg";
-let memCfg={apiKey:"",model:"claude-haiku-4-5-20251001"};
+/* 쓸 수 있는 모델은 이 두 가지뿐입니다. 다른 이름은 절대 보내지 않습니다. */
+const HAIKU="claude-haiku-4-5",SONNET="claude-sonnet-5-5";
+/* 예전에 저장된 모델 이름(날짜가 붙은 이름 등)도 둘 중 하나로 맞춤: haiku → 하이쿠, sonnet → 소넷, 그 밖 → 하이쿠 */
+function normModel(m){m=String(m||"");return m.includes("haiku")||!m.includes("sonnet")?HAIKU:SONNET}
+let memCfg={apiKey:"",model:HAIKU};
 
 function loadCfg(){
   try{const r=localStorage.getItem(CFG_KEY);if(r)memCfg={...memCfg,...JSON.parse(r)}}catch(e){}
+  const m=normModel(memCfg.model);
+  if(m!==memCfg.model)saveCfg({model:m});
   return memCfg;
 }
 function saveCfg(c){
@@ -750,7 +621,7 @@ function closeSheet(){const el=document.getElementById("sheet");if(el)el.remove(
 function menu(){
   sheet(`<h3>메뉴</h3><p class="lead">무엇을 하시겠어요?</p>
     <div class="rows" style="margin-top:20px">
-      ${row("처음 화면","표지로 돌아갑니다",false,"closeSheet();toCover()")}
+      ${row("처음 화면","표지로 돌아가요 · 지금 학생의 기록은 지워져요",false,"closeSheet();restart()")}
       ${row("설정","API 키와 모델을 지정합니다",false,"closeSheet();settings()")}
       ${row("향기 목록","가지고 계신 향기로 바꿉니다",false,"closeSheet();scentEditor()")}
       ${row("도움말","진행 방법을 봅니다",false,"closeSheet();help()")}
@@ -789,10 +660,10 @@ function settings(){
     <div class="field">
       <label>사용할 모델</label>
       <div class="pickrow">
-        <button class="${c.model.indexOf("haiku")>=0?"on":""}" onclick="pickModel('claude-haiku-4-5-20251001')">
-          <strong>하이쿠</strong>질문 1개 약 3원<br>빠름 · 수업용 권장</button>
-        <button class="${c.model.indexOf("sonnet")>=0?"on":""}" onclick="pickModel('claude-sonnet-4-6')">
-          <strong>소넷</strong>질문 1개 약 8원<br>더 섬세한 답변</button>
+        <button class="${c.model===HAIKU?"on":""}" onclick="pickModel('${HAIKU}')">
+          <strong>하이쿠</strong>빠르고 저렴 · 수업용 권장<br>질문 1개 약 3원</button>
+        <button class="${c.model===SONNET?"on":""}" onclick="pickModel('${SONNET}')">
+          <strong>소넷</strong>더 섬세한 답변<br>질문 1개 약 8원</button>
       </div>
     </div>
 
@@ -811,7 +682,7 @@ function settings(){
     </div>`);
 }
 
-function pickModel(m){saveCfg({model:m});settings()}
+function pickModel(m){saveCfg({model:normModel(m)});settings()}
 
 function applyKey(){
   const v=document.getElementById("apikey").value.trim();
@@ -843,6 +714,8 @@ let lastRenderedStep=null;
 function render(){
   // 단계가 실제로 바뀔 때만 맨 위로 스크롤(같은 단계에서 색·주제만 고를 땐 그대로 둠)
   const stepChanged=state.step!==lastRenderedStep;
+  // 카드 단계를 떠나면 걸려 있던 섞기·뒤집기 타이머를 모두 멈춤
+  if(stepChanged&&lastRenderedStep===2){cancelTimers();picking=false}
   lastRenderedStep=state.step;
   const scrollUp=()=>{if(stepChanged)window.scrollTo({top:0,behavior:"smooth"})};
   const onCover=state.step===-1;
@@ -860,9 +733,7 @@ function render(){
   scrollUp();
 }
 
-/* 표지에 얹는 제목 — 이 문구만 바꾸면 표지 제목이 바뀝니다.
-   (이미지 속 옛 제목은 아래 .cover-title 패널이 가립니다) 줄바꿈은 <br> */
-const COVER_TITLE="내 마음을 감싸는<br>위로의 향기";
+/* 표지 제목(COVER_TITLE)은 content.js 에서 바꿉니다 */
 function coverScreen(){
   screenEl.className="content cover";
   screenEl.innerHTML=`<div class="poster" onclick="start()">
@@ -877,7 +748,7 @@ function colorScreen(){
     panel(head(1,"나의 현재 감정 색",
       "지금 내 마음에 가장 가까운 색을 하나 골라 보세요. 색은 리딩의 결론이 아니라, 현재 에너지를 보완하는 배경 정보로만 사용합니다.")
      +`<div class="rows">${colors.map((c,i)=>row(c[0],"",state.color===c[0],`setColor(${i})`,c[1])).join("")}</div>`)
-     +`<div class="nav"><button class="btn" onclick="toCover()">표지로</button>
+     +`<div class="nav"><button class="btn" onclick="restart()">표지로</button>
         <button class="btn primary" ${state.color?"":"disabled"} onclick="next()">다음</button></div>`
   )+mark;
 }
@@ -886,20 +757,17 @@ function topicScreen(){
   screenEl.innerHTML=panel(head(2,"오늘 묻고 싶은 주제",
     "질문은 자세히 설명하지 않아도 됩니다. 리딩은 선택한 주제와 카드 배열을 중심으로 진행됩니다.")
    +`<div class="rows">${topics.map((t,i)=>row(t[0],t[1],state.topic===t[0],`setTopic(${i})`)).join("")}</div>`
-   +`<textarea id="note" placeholder="선택 입력 · 요즘 가장 마음에 걸리는 일을 한 문장으로 적어도 됩니다.">${state.note}</textarea>`)
+   +`<textarea id="note" placeholder="선택 입력 · 요즘 가장 마음에 걸리는 일을 한 문장으로 적어도 됩니다.">${esc(state.note)}</textarea>`)
    +`<div class="nav"><button class="btn" onclick="prev()">이전</button>
       <button class="btn primary" ${state.topic?"":"disabled"} onclick="next()">카드 펼치기</button></div>`+mark;
 }
 
 /* ── STEP 03 ───────────────────────────── */
-function makeDeck(){
-  let pool=[];
-  while(pool.length<FAN_N)pool=pool.concat(shuffled(cards));
-  return shuffled(pool.slice(0,FAN_N));
-}
+/* 숨기지 않은 카드(deckPool)에서만, 겹치지 않게 최대 36장 */
+function makeDeck(){return shuffled(deckPool()).slice(0,FAN_MAX)}
 
 function drawScreen(){
-  if(!deck)deck=makeDeck();
+  if(!deck){deck=makeDeck();state.draw=[]}
   screenEl.innerHTML=head(3,"세 장의 카드를 선택하세요",
     "학생은 카드만 선택합니다. 카드의 뜻은 선택하지 않습니다. 정방향과 역방향은 카드가 공개될 때 정해집니다.")
    +`<div class="tarot-room">
@@ -907,15 +775,17 @@ function drawScreen(){
       <div class="counter" id="counter"></div>
       <div class="fan locked" id="fan"></div></div>
     <div class="slots" id="slots"></div>
-    <div class="nav"><button class="btn" onclick="state.draw=[];deck=null;prev()">이전</button>
+    <div class="nav"><button class="btn" id="drawback" onclick="drawBack()">이전</button>
       <div class="mid"><button class="btn" id="reshuffle" onclick="reshuffle()">다시 섞기</button>
-      <button class="btn primary" id="go" disabled onclick="makeReading();next()">리딩 보기</button></div></div>`+mark;
+      <button class="btn primary" id="go" ${state.draw.length===3?"":"disabled"} onclick="toReading()">리딩 보기</button></div></div>`+mark;
   buildFan();renderSlots();shuffle();
 }
+function drawBack(){if(locked||picking||!navOk())return;clearDraw();state.step=1;render()}
+function toReading(){if(state.draw.length!==3||locked||picking||!navOk())return;makeReading();state.step=3;render()}
 
 function buildFan(){
   document.getElementById("fan").innerHTML=deck.map((c,i)=>
-    `<button class="card" aria-label="카드 ${i+1}" onclick="pick(${i})"><div class="inner"><div class="face back"></div><div class="face front" id="front${i}"></div></div></button>`
+    `<button class="card${state.draw.some(d=>d.ko===c.ko)?" hide":""}" aria-label="카드 ${i+1}" onclick="pick(${i})"><div class="inner"><div class="face back"></div><div class="face front" id="front${i}"></div></div></button>`
   ).join("");
   stack();
 }
@@ -931,35 +801,44 @@ function geom(){
   return {m,dx:Math.max(3,Math.min(26,(w-cw-30)/(n-1))),dr:82/(n-1)};
 }
 function layout(){
+  needLayout=false;
   const {m,dx,dr}=geom();
   els().forEach((el,i)=>setVar(el,((i-m)*dx).toFixed(1),(Math.abs(i-m)*1.6).toFixed(1),((i-m)*dr).toFixed(1)));
 }
 function shuffle(){
   locked=true;
-  const fan=document.getElementById("fan"),st=document.getElementById("status");
-  fan.classList.add("locked");
-  document.getElementById("reshuffle").disabled=true;
-  st.innerHTML=`카드를 섞는 중<span class="dots"></span>`;
+  document.getElementById("fan").classList.add("locked");
+  document.getElementById("status").innerHTML=`카드를 섞는 중<span class="dots"></span>`;
+  syncDraw();
   stack();
-  setTimeout(()=>riffle(1),320);
-  setTimeout(stack,660);
-  setTimeout(()=>riffle(-1),980);
-  setTimeout(stack,1320);
-  setTimeout(()=>riffle(1),1600);
-  setTimeout(()=>{
-    layout();
-    st.innerHTML=`충분히 생각한 뒤, <b>마음이 가는 카드</b>를 고르세요`;
-    fan.classList.remove("locked");locked=false;
-    document.getElementById("reshuffle").disabled=false;updateCounter();
-  },2000);
+  later(()=>riffle(1),320);
+  later(stack,660);
+  later(()=>riffle(-1),980);
+  later(stack,1320);
+  later(()=>riffle(1),1600);
+  later(()=>{locked=false;layout();drawReady()},2000);
 }
 function reshuffle(){
   if(locked||picking)return;
-  state.draw=[];deck=makeDeck();
-  buildFan();renderSlots();updateGo();shuffle();
+  clearDraw();deck=makeDeck();
+  buildFan();renderSlots();shuffle();
 }
-function updateCounter(){const c=document.getElementById("counter");if(c)c.textContent=`${deck.length}장 중 ${state.draw.length} / 3 선택`}
-function updateGo(){const g=document.getElementById("go");if(g)g.disabled=state.draw.length!==3}
+/* 장수 표시와 버튼 — 섞거나 뒤집는 동안에는 이전·다시 섞기·리딩 보기를 잠금 */
+function syncDraw(){
+  const n=state.draw.length,busy=locked||picking,$=id=>document.getElementById(id);
+  if($("counter"))$("counter").textContent=`${deck.length}장 중 ${n} / 3 선택`;
+  if($("go"))$("go").disabled=n!==3||busy;
+  if($("reshuffle"))$("reshuffle").disabled=busy;
+  if($("drawback"))$("drawback").disabled=busy;
+}
+/* 섞기·뒤집기가 끝난 뒤: 지금까지 뽑은 장수에 맞춰 안내 문구와 부채꼴 잠금을 정함 */
+function drawReady(){
+  const n=state.draw.length,fan=document.getElementById("fan"),st=document.getElementById("status");
+  fan.classList.toggle("locked",n>=3);
+  st.innerHTML=n>=3?`세 장이 모두 놓였습니다. <b>리딩 보기</b>를 눌러 주세요`
+    :`충분히 생각한 뒤, <b>${n?"다음 카드":"마음이 가는 카드"}</b>를 고르세요`;
+  syncDraw();
+}
 
 function renderSlots(pending){
   const box=document.getElementById("slots");
@@ -974,51 +853,40 @@ function renderSlots(pending){
 }
 
 function pick(i){
-  if(locked||picking||state.draw.length>=3)return;
+  const el=els()[i];
+  if(locked||picking||state.draw.length>=3||!el||el.classList.contains("hide"))return;
   let c=deck[i];
-  if(state.draw.some(d=>d.ko===c.ko)){
-    const rest=cards.filter(x=>!state.draw.some(d=>d.ko===x.ko));
+  if(state.draw.some(d=>d.ko===c.ko)){   // 덱은 겹치지 않지만 혹시 모를 중복 대비 — 이때도 숨긴 카드는 고르지 않음
+    const rest=deckPool().filter(x=>!state.draw.some(d=>d.ko===x.ko));
     c=rest[Math.floor(Math.random()*rest.length)];
   }
-  picking=true;
+  picking=true;syncDraw();
   const slotIndex=state.draw.length;
-  const el=els()[i],fan=document.getElementById("fan"),st=document.getElementById("status");
+  const fan=document.getElementById("fan"),st=document.getElementById("status");
   fan.classList.add("locked");
   st.innerHTML=`<b>${slotIndex+1}번째 카드</b>를 뒤집는 중<span class="dots"></span>`;
   renderSlots(slotIndex);
   const rev=Math.random()<.28;
   document.getElementById("front"+i).innerHTML=img(c,rev?'style="transform:rotate(180deg)"':"");
   el.classList.add("chosen");
-  setTimeout(()=>el.classList.add("picked"),480);
-  setTimeout(()=>{st.innerHTML=`<b>${c.ko}</b> · ${rev?"역방향":"정방향"}`},1250);
-  setTimeout(()=>{state.draw.push({...c,rev});renderSlots();el.classList.add("done")},2150);
-  setTimeout(()=>{
+  later(()=>el.classList.add("picked"),480);
+  later(()=>{st.innerHTML=`<b>${c.ko}</b> · ${rev?"역방향":"정방향"}`},1250);
+  later(()=>{state.draw.push({...c,rev});renderSlots();el.classList.add("done");syncDraw()},2150);
+  later(()=>{
     el.classList.remove("chosen","picked","done");
     el.classList.add("hide");
-    picking=false;updateCounter();updateGo();
-    if(state.draw.length<3){
-      fan.classList.remove("locked");
-      st.innerHTML=`충분히 생각한 뒤, <b>다음 카드</b>를 고르세요`;
-    }else st.innerHTML=`세 장이 모두 놓였습니다. <b>리딩 보기</b>를 눌러 주세요`;
+    picking=false;
+    if(needLayout)layout();   // 뒤집는 사이 화면을 돌렸다면 지금 다시 펼침
+    drawReady();
   },2600);
 }
-window.addEventListener("resize",()=>{if(state.step===2&&!locked&&!picking)layout()});
+window.addEventListener("resize",()=>{
+  if(state.step!==2||!deck)return;
+  if(locked||picking)needLayout=true;else layout();
+});
 
 /* ── STEP 04 / 05 ──────────────────────── */
 function meaning(c){return c.rev?c.down:c.up}
-
-/* 처음에 고른 감정 색의 의미 — 리딩에 이어지도록 사용 */
-const COLOR_MEANING={
-  "빨강":"하고 싶은 것이 뚜렷하고 마음속 에너지가 강한 때예요. 그 열정을 좋은 방향으로 써 보면 좋겠어요.",
-  "주황":"사람들과 어울리고 싶고 활기를 찾고 싶은 마음이 담겨 있어요. 따뜻하게 먼저 다가가 봐도 좋아요.",
-  "노랑":"밝은 기대와 즐거움을 찾고 싶은 마음이에요. 작은 즐거움부터 하나씩 챙겨 보면 어떨까요.",
-  "초록":"조금 쉬어가며 마음을 회복하고 싶은 때예요. 무리하지 말고 안정을 먼저 찾아보세요.",
-  "파랑":"마음을 차분히 가라앉히고 정리하고 싶은 상태예요. 천천히 생각을 정돈해 보면 좋겠어요.",
-  "남색":"혼자만의 시간과 깊은 생각이 필요한 마음이에요. 조용히 나를 들여다보는 시간이 도움이 될 수 있어요.",
-  "보라":"마음이 섬세하고 상상이 많아지는 때예요. 떠오르는 감정을 부드럽게 살펴보면 좋겠어요.",
-  "분홍":"다정함을 나누고 사랑받고 싶은 마음이 담겨 있어요. 가까운 사람에게 마음을 표현해 봐도 좋아요.",
-  "회색":"잠시 거리를 두고 조용히 있고 싶은 마음이에요. 지금은 무리해서 밝아지지 않아도 괜찮아요."
-};
 
 function makeReading(){
   const [a,b,c]=state.draw;
@@ -1029,16 +897,16 @@ function makeReading(){
   state.reading=colorPart+`<p><b>현재 상황 — ${a.ko} ${a.rev?"역방향":"정방향"}</b><br>${meaning(a)}. ${state.topic}이라는 주제에서 지금은 이 카드의 에너지가 가장 앞에 나타납니다.</p>
 <p><b>보이지 않는 영향 — ${b.ko} ${b.rev?"역방향":"정방향"}</b><br>${meaning(b)}. 겉으로 드러난 고민보다 이 부분이 마음속 판단과 반응에 더 크게 영향을 주고 있을 수 있습니다.</p>
 <p><b>앞으로 취할 태도 — ${c.ko} ${c.rev?"역방향":"정방향"}</b><br>${meaning(c)}. 이 카드는 미래를 단정하는 것이 아니라, 지금 선택할 수 있는 태도와 방향을 보여줍니다.</p>
-<p><b>세 카드의 흐름</b><br>${combine(a,b,c)} ${state.note?`"${state.note}"라는 고민에서는 결과를 서두르기보다 카드가 보여준 흐름을 기준으로 작은 행동 하나를 정하는 것이 좋겠습니다.`:"지금은 정답을 맞히기보다, 세 카드가 공통으로 말하는 흐름을 알아차리는 것이 중요합니다."}${colorTie}</p>`;
+<p><b>세 카드의 흐름</b><br>${combine(a,b,c)} ${state.note?`"${esc(state.note)}"라는 고민에서는 결과를 서두르기보다 카드가 보여준 흐름을 기준으로 작은 행동 하나를 정하는 것이 좋겠습니다.`:"지금은 정답을 맞히기보다, 세 카드가 공통으로 말하는 흐름을 알아차리는 것이 중요합니다."}${colorTie}</p>`;
   state.scents=pickScents();
 }
 
 function combine(a,b,c){
   const neg=[a,b,c].filter(x=>x.rev).length;
   if(neg>=2)return "현재는 마음의 흐름이 막혀 있거나 생각이 복잡하게 얽힌 시기로 보입니다. 새로운 결론을 내리기보다 먼저 부담을 줄이고, 무엇이 나를 멈추게 하는지 정리하는 과정이 필요합니다.";
-  if(["태양","별","세계","컵 10","컵 9"].includes(c.ko))return "앞의 두 카드에서 드러난 고민을 지나 마지막 카드가 회복과 명료함을 향하고 있습니다. 무리하게 밝아지려 하기보다, 지금 이 순간의 작은 변화를 믿고 한 발씩 나아가는 것이 좋겠습니다.";
+  // 태양·별·세계는 지금 숨긴 카드라 뽑히지 않아요(다시 켜면 그대로 쓰임). 그래서 열쇠를 함께 둠
+  if(["태양","별","세계","컵 10","컵 9","열쇠"].includes(c.ko))return "앞의 두 카드에서 드러난 고민을 지나 마지막 카드가 회복과 명료함을 향하고 있습니다. 무리하게 밝아지려 하기보다, 지금 이 순간의 작은 변화를 믿고 한 발씩 나아가는 것이 좋겠습니다.";
   if(a.rev&&!b.rev&&!c.rev)return "현재는 어려움이 있지만, 그 속에서 해결책이 보이기 시작하고 있습니다. 지금은 작은 행동 하나가 흐름을 바꿀 수 있는 시점입니다.";
-  if(!a.rev&&b.rev&&c.rev)return "표면에 드러난 것과 내면의 흐름이 다를 수 있습니다. 겉으로 보이는 것에 흔들리지 말고, 자신의 내면의 목소리에 귀 기울이는 것이 중요한 시기입니다.";
   return "세 카드가 보여주는 흐름을 따라 현재의 상황을 있는 그대로 받아들이고, 그 안에서 할 수 있는 작은 선택을 시작해 보세요.";
 }
 
@@ -1063,18 +931,7 @@ function scentScreen(){
       <button class="btn primary" onclick="restart()">처음부터</button></div>`+mark;
 }
 
-function desc(x){
-  const m={레몬:"생각을 가볍게 환기하는 밝은 시트러스 이미지",자몽:"막힌 흐름을 전환하는 생기 있는 이미지",민트:"복잡한 생각 사이에 공간을 만드는 시원한 이미지",로즈마리:"방향과 집중을 다시 세우는 또렷한 허브 이미지",오렌지:"따뜻함과 자신감을 연결하는 밝은 이미지",편백:"흔들릴 때 중심을 잡는 숲의 이미지",라벤더:"속도를 낮추고 내면을 바라보는 차분한 이미지",로즈:"관계와 감정을 부드럽게 표현하는 이미지",코튼:"안전하고 편안한 공간을 떠올리는 이미지",바닐라:"스스로를 다독이는 포근한 이미지",만다린:"부드러운 활력과 회복을 떠올리는 이미지",시더우드:"기준과 안정감을 세우는 단단한 나무 이미지",베르가못:"밝음과 차분함 사이의 균형 이미지",유칼립투스:"답답한 흐름을 열어주는 맑은 공기 이미지"};
-  return m[x]||"카드 리딩과 연결된 향기 이미지";
-}
-
-render();
-
 /* ══════════════ 추가 질문 ══════════════ */
-let askCount=0;
-let chatHistory=[];
-const ASK_LIMIT=3;
-
 const SYSTEM=`당신은 초등학교 3학년~중학교 3학년 학생을 대상으로 하는 학교 수업용 타로 활동의 안내자입니다.
 
 반드시 지킬 것:
@@ -1115,8 +972,9 @@ async function callClaude(key,model,topic,question,cards,reading){
         "anthropic-dangerous-direct-browser-access":"true"
       },
       body:JSON.stringify({
-        model:model||"claude-haiku-4-5-20251001",
+        model:normModel(model),
         max_tokens:400,
+        ...(normModel(model)===SONNET?{thinking:{type:"between_tools"}}:{}),   // 소넷 5.5: 생각(thinking) 끄기
         system:SYSTEM,
         messages:chatHistory.length
           ?[...chatHistory,{role:"user",content:question}]
@@ -1143,42 +1001,50 @@ function askBlock(){
       <textarea id="q" rows="1" maxlength="300" placeholder="궁금한 점을 적어 보세요"></textarea>
       <button class="send" id="askbtn" onclick="ask()" aria-label="보내기">➤</button>
     </div>
-    <div class="chathint" id="chathint">남은 질문 ${ASK_LIMIT}개</div></div>`;
+    <div class="chathint" id="chathint">${hintText()}</div></div>`;
 }
 
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-function addMsg(who,text,typing){
+/* 말풍선 하나를 화면에만 그림(기록하지 않음). AI·학생 글은 textContent 로만 넣음 */
+function bubble(who,text,typing){
   const log=document.getElementById("chatlog");
   if(!log)return null;
   const el=document.createElement("div");
-  el.className="msg "+who;
-  const body=typing?'<span class="typing"><i></i><i></i><i></i></span>':esc(text);
-  el.innerHTML=(who==="ai"?'<div class="ava">✦</div>':"")+`<div class="bubble">${body}</div>`;
+  el.className="msg "+who+(typing?" pending":"");
+  el.innerHTML=(who==="ai"?'<div class="ava">✦</div>':"")+'<div class="bubble"></div>';
+  const b=el.querySelector(".bubble");
+  if(typing)b.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
+  else b.textContent=text;
   log.appendChild(el);
-  el.scrollIntoView({behavior:"smooth",block:"nearest"});
+  return el;
+}
+/* 대화 기록(chatLog)에 남기고 화면에도 그림 */
+function addMsg(who,text){
+  chatLog.push({who,text});
+  const el=bubble(who,text);
+  if(el)el.scrollIntoView({behavior:"smooth",block:"nearest"});
   return el;
 }
 
+/* 리딩 화면을 다시 그릴 때(향기 → 이전) 앞의 대화와 남은 질문 수를 그대로 보여 줌 */
 function initChat(){
   const t=document.getElementById("q");
   if(!t)return;
-  addMsg("ai",`${state.topic} 이야기로 카드 세 장을 펼쳐 봤어요.\n더 궁금한 점이 있으면 편하게 물어보세요.`);
+  if(!chatLog.length)chatLog.push({who:"ai",text:`${state.topic} 이야기로 카드 세 장을 펼쳐 봤어요.\n더 궁금한 점이 있으면 편하게 물어보세요.`});
+  chatLog.forEach(m=>bubble(m.who,m.text));
+  if(asking){bubble("ai","",true);document.getElementById("askbtn").disabled=true}
   t.addEventListener("input",()=>{t.style.height="auto";t.style.height=Math.min(t.scrollHeight,150)+"px"});
   t.addEventListener("keydown",e=>{
     if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ask()}
   });
 }
 
-function updateHint(){
-  const h=document.getElementById("chathint");
-  if(h)h.textContent=askCount>=ASK_LIMIT?"오늘 질문을 다 썼어요":`남은 질문 ${ASK_LIMIT-askCount}개`;
-}
+const hintText=()=>askCount>=ASK_LIMIT?"오늘 질문을 다 썼어요":`남은 질문 ${ASK_LIMIT-askCount}개`;
+function updateHint(){const h=document.getElementById("chathint");if(h)h.textContent=hintText()}
 
 async function ask(){
-  const t=document.getElementById("q"),btn=document.getElementById("askbtn");
-  const q=t.value.trim();
-  if(!q||btn.disabled)return;
+  const t=document.getElementById("q");
+  const q=t?t.value.trim():"";
+  if(!q||asking)return;
 
   addMsg("me",q);
   t.value="";t.style.height="auto";
@@ -1188,9 +1054,11 @@ async function ask(){
     return;
   }
   askCount++;updateHint();
-  btn.disabled=true;
-  const pending=addMsg("ai","",true);
+  asking=true;
+  document.getElementById("askbtn").disabled=true;
+  bubble("ai","",true).scrollIntoView({behavior:"smooth",block:"nearest"});
 
+  const g=gen;   // 기다리는 사이 다시 뽑기·처음부터를 누르면 gen 이 바뀜
   const cards=state.draw.map((d,i)=>({role:roles[i],ko:d.ko,rev:d.rev,meaning:meaning(d)}));
   const reading=state.reading.replace(/<[^>]+>/g," ");
   const cfg=loadCfg();
@@ -1202,7 +1070,7 @@ async function ask(){
     if(r.ok)answer=r.text;
   }
   // 2) 없으면 서버(배포했을 때)로
-  if(!answer){
+  if(!answer&&g===gen){
     try{
       const r=await fetch("/api/ask",{method:"POST",headers:{"content-type":"application/json"},
         body:JSON.stringify({topic:state.topic,cards,reading,question:q,history:chatHistory})});
@@ -1210,17 +1078,26 @@ async function ask(){
       answer=d.answer;
     }catch(e){}
   }
+  // 그사이 다른 학생·다른 카드로 바뀌었으면 이 답은 버림(새 화면과 새 대화에 섞이지 않게)
+  if(g!==gen)return;
   // 3) 그래도 없으면 미리 준비된 답변
   if(!answer)answer=localAnswer();
 
-  // 대화 흐름 기억 (다음 질문이 앞 대화를 이어받도록)
+  // 대화 흐름 기억 (다음 질문이 앞 대화를 이어받도록). 질문 수가 ASK_LIMIT 로 묶여 있어 길이도 그만큼만 늘어남
   chatHistory.push({role:"user",content:chatHistory.length?q:buildPrompt(state.topic,cards,reading,q)});
   chatHistory.push({role:"assistant",content:answer});
-  if(chatHistory.length>10)chatHistory=chatHistory.slice(-10);
+  chatLog.push({who:"ai",text:answer});
+  asking=false;
 
-  pending.querySelector(".bubble").textContent=answer;
-  pending.scrollIntoView({behavior:"smooth",block:"nearest"});
-  btn.disabled=false;
+  // 리딩 화면에 있으면 기다리던 말풍선을 채움(향기 화면에 가 있으면 돌아올 때 chatLog 로 다시 그림)
+  const p=document.querySelector("#chatlog .msg.pending");
+  if(p){
+    p.classList.remove("pending");
+    p.querySelector(".bubble").textContent=answer;
+    p.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+  const btn=document.getElementById("askbtn");
+  if(btn)btn.disabled=false;
 }
 
 /* API 키가 없거나 연결이 끊겼을 때 쓰는 예비 답변 */
@@ -1234,6 +1111,8 @@ function localAnswer(){
   const end=`마지막 ${c.ko}는 앞으로의 태도를 알려줘요. ${meaning(c)}. 정답을 정하기보다, 오늘 할 수 있는 작은 것 하나를 골라 보면 어떨까요?`;
   return `${open} ${mid} ${end}`;
 }
+
+render();
 
 /* ── 화면 맞춤 ──────────────────────────────
    데스크톱·태블릿(가로 701px 이상)에서는 액자 전체를 뷰포트 크기에 맞춰
