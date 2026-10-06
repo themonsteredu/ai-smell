@@ -77,8 +77,9 @@ async function domChecks() {
   resumed.window.ScentPlanner.go(6);
   write(resumed, 'name', '다시 고친 숲길'); submit(resumed, 'plan-editor');
   check(resumed.window.ScentPlanner.output().revision === 2, 'Changed plan increments revision');
+  Object.defineProperty(resumed.window.navigator, 'clipboard', { value: { writeText: () => new Promise(() => {}) } });
   await resumed.window.ScentPlanner.copy();
-  check(resumed.window.document.querySelector('.plan-copy-text').value.includes('다시 고친 숲길'), 'Clipboard denial provides selectable text');
+  check(resumed.window.document.querySelector('.plan-copy-text').value.includes('다시 고친 숲길'), 'Unresponsive clipboard provides selectable text after a bounded wait');
   resumed.window.closeSheet();
   resumed.window.ScentPlanner.go(5); select(resumed, 'audience', 'gift'); submit(resumed, 'plan-brief'); submit(resumed, 'plan-editor');
   check(resumed.window.ScentPlanner.output().reflection.assistance === 'example', 'Changing customer does not erase suggestion provenance');

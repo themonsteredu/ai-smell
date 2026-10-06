@@ -263,16 +263,20 @@
   async function copy() {
     const text = plainText(); if (!text) return;
     const current = plan;
+    let timer;
     try {
       if (!navigator.clipboard) throw new Error('unavailable');
-      await navigator.clipboard.writeText(text);
+      await Promise.race([
+        navigator.clipboard.writeText(text),
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('clipboard timeout')), 2000); })
+      ]);
       const status = document.getElementById('plan-export-status');
       if (status && current === plan) status.textContent = '기획서를 복사했어요. 필요한 곳에 붙여 넣어 주세요.';
     } catch {
       if (current !== plan || state.step !== 7) return;
       sheet(`<h3>기획서 복사</h3><p class="plan-help">아래 글을 길게 누르거나 전체 선택해 복사해 주세요.</p><textarea class="plan-copy-text" readonly aria-label="복사할 기획서">${escape(text)}</textarea><div class="nav"><button class="btn" onclick="closeSheet()">닫기</button></div>`);
       document.querySelector('.plan-copy-text').select();
-    }
+    } finally { clearTimeout(timer); }
   }
   function download() {
     const text = plainText(); if (!text) return;
