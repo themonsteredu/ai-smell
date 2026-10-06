@@ -25,6 +25,7 @@ const MAX_BODY=8*1024;            // 요청 크기 상한(바이트). 정상 요
 const TIMEOUT_MS=15000;           // AI 응답을 기다리는 최대 시간
 const MAX_Q=300;                  // 학생 질문 글자 수 상한 (앱 입력칸과 같음)
 const MAX_A=1500;                 // 앞 대화의 AI 답 글자 수 상한
+const RATE_MAX=60;                // 같은 IP에서 1분에 AI를 부르는 최대 횟수(한 반이 IP 하나를 같이 써도 넉넉하게)
 // ──────────── [설정 끝] ────────────
 
 const TOPICS=C.topics.map(t=>t[0]);
@@ -46,6 +47,22 @@ function readBody(req){
   if(Buffer.isBuffer(b))b=b.toString("utf8");
   if(typeof b==="string")b=JSON.parse(b);
   return b;
+}
+
+/* 같은 IP가 1분 안에 AI를 부른 횟수를 셈(질문 수 제한은 앱이 보낸 앞 대화로만 셀 수 있어서, 마구 부르는 것을 따로 막음).
+   서버가 여러 개 떠 있으면 서버마다 따로 세는 가벼운 장치예요. 서버 키를 넣을 때는 Vercel Firewall 의
+   Rate Limiting 규칙(/api/ask)과 Anthropic 월 한도도 꼭 함께 걸어 주세요(CLAUDE.md) */
+const recent=new Map();
+function clientIp(req){
+  const f=String(req.headers["x-forwarded-for"]||"").split(",")[0].trim();
+  return String(req.headers["x-real-ip"]||f||(req.socket&&req.socket.remoteAddress)||"?");
+}
+function rateOk(ip){
+  const now=Date.now(),fresh=t=>now-t<60000,list=(recent.get(ip)||[]).filter(fresh);
+  if(recent.size>2000)for(const [k,v] of recent)if(!v.some(fresh))recent.delete(k);
+  if(list.length>=RATE_MAX){recent.set(ip,list);return false}
+  list.push(now);recent.set(ip,list);
+  return true;
 }
 
 /* 본문 모양 확인. 문제가 있으면 무엇이 틀렸는지(짧은 이름), 괜찮으면 "" */
@@ -84,7 +101,7 @@ module.exports=async(req,res)=>{
   if(Number(req.headers["content-length"])>MAX_BODY)return send(res,413,{answer:null,reason:"TOO_LARGE",error:"요청이 너무 깁니다."});
   let b;
   try{b=readBody(req)}catch(e){return send(res,400,{answer:null,reason:"BAD_REQUEST",error:"JSON 형식이 아닙니다."})}
-  if(JSON.stringify(b===undefined?null:b).length>MAX_BODY)return send(res,413,{answer:null,reason:"TOO_LARGE",error:"요청이 너무 깁니다."});
+  if(Buffer.byteLength(JSON.stringify(b===undefined?null:b),"utf8")>MAX_BODY)return send(res,413,{answer:null,reason:"TOO_LARGE",error:"요청이 너무 깁니다."});
 
   // 1) 위험한 말이면 AI를 부르지 않고 바로 도움 안내 (다른 칸이 이상해도 먼저)
   const said=[b&&b.question,...(b&&Array.isArray(b.history)?b.history.filter((m,i)=>i%2===0).map(m=>m&&m.content):[])];
@@ -99,6 +116,7 @@ module.exports=async(req,res)=>{
   // 3) 키가 없으면 앱이 미리 준비된 답변으로 넘어갑니다
   const key=process.env.ANTHROPIC_API_KEY;
   if(!key)return reply(res,"NO_KEY");
+  if(!rateOk(clientIp(req)))return reply(res,"RATE");
 
   // 4) 첫 질문의 카드 정보는 서버가 content.js 로 다시 만듭니다(학생 기기가 보낸 리딩·뜻 글은 쓰지 않음)
   const ctx={topic:b.topic,color:b.color||null,cards:b.cards.map(c=>({ko:c.ko,rev:c.rev}))};

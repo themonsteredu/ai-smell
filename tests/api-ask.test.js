@@ -39,7 +39,18 @@ test("403 when Origin is another site; same origin and no Origin are fine",async
 test("413 for bodies over 8KB (by header or by size)",async()=>{
   assert.equal((await call(body(),{headers:{"content-length":"9000"}})).code,413);
   assert.equal((await call(body({question:"가".repeat(9000)}))).code,413);
+  // 글자 수가 아니라 바이트로 셈 — 한글 3,000자(약 9KB)에 content-length 가 없어도 413
+  assert.equal((await call({...body(),pad:"가".repeat(3000)})).code,413);
   assert.equal(calls.length,0);
+});
+
+test("RATE after 60 upstream calls a minute from one IP; other IPs and NO_KEY are not counted",async()=>{
+  const ip={"x-forwarded-for":"203.0.113.9, 10.0.0.1"};
+  for(let i=0;i<60;i++)assert.equal((await call(body(),{headers:ip})).out.reason,"OK");
+  assert.deepEqual((await call(body(),{headers:ip})).out,{answer:null,reason:"RATE"});
+  assert.equal(calls.length,60,"the 61st call never reaches Anthropic");
+  assert.equal((await call(body(),{headers:{"x-forwarded-for":"198.51.100.7"}})).out.reason,"OK");
+  assert.equal((await call(body(),{headers:{"x-forwarded-for":"192.0.2.1"},key:""})).out.reason,"NO_KEY");
 });
 
 test("400 for bad shapes — nothing is forwarded",async()=>{

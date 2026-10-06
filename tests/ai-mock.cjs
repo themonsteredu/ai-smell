@@ -11,11 +11,16 @@
               AI 답만 남은 질문 수를 줄임(500 → 준비된 답변은 안 줄임) · 다 쓰면 더 보내지 않음
      fail500  리딩 500 → 준비된 풀이 + '준비된 풀이' 표시, 정리 요청 없음
      refusal · maxTokens   네 부분이 다 와도 stop_reason 이 refusal·max_tokens → 준비된 풀이(앞서 보인 글은 사라짐)
-     marker   리딩 답에 [도움필요] → 도움 안내 + 붉은 표시, 이어서 하기 뒤 대화 답의 [도움필요]도 도움 안내(질문은 기록에서 지움)
+     marker   리딩 답에 [도움필요] → 도움 안내 + 붉은 표시(그동안 화면을 돌려도 오류 없음, 선생님 확인 뒤에도 붉은 표시는 남음),
+              이어서 하기 뒤 대화 답의 [도움필요]도 도움 안내(질문은 기록에서 지움) · 새로고침해도 도움 안내가 다시 뜸
+     midmarker  리딩 중간에 '[도' … '움필요]'로 나뉘어 온 표시는 한 글자도 보이지 않음 · 대화 답 맨 앞의 괄호 없는 '도움필요'도 도움 안내
+     aioff    리딩이 오는 중에 질문 → 화면에 보이는 AI 글을 함께 보냄(준비된 풀이가 아니라) · 안내문 캐싱 표시 ·
+              그 뒤 'AI 기능 끄기' → 리딩 요청이 끊기고 준비된 풀이(표시 없음), 정리 요청 없음
      slow     8초 넘게 첫 글자가 없음 → 기다림 표시 뒤 준비된 풀이(늦게 온 답은 무시)
      stale    리딩·대화가 오는 중에 처음 화면 → 요청이 끊기고, 다음 학생 화면에 앞 학생 글이 한 글자도 안 나옴
-     sonnet   소넷: thinking between_tools + fallbacks:'default' + 베타 머리글, 400 이면 둘만 빼고 한 번 더(중간 fallback 블록도 읽음)
-     nokey    키 없음: AI 요청 0번, 표시 없음, 기본 질문 버튼 → 준비된 답변
+     sonnet   소넷: thinking between_tools + fallbacks:'default' + 베타 머리글, 400 이면 둘만 빼고 한 번 더(중간 fallback 블록도 읽음),
+              한 번 400 을 받은 뒤의 정리·대화는 처음부터 베타 없이(실패할 요청을 또 보내지 않음)
+     nokey    키 없음: AI 요청 0번, 표시 없음, 기본 질문 버튼 → 준비된 답변, 남은 질문 수는 보이지 않음
      total    30초 안에 끝 표시가 없음: 네 부분이 다 왔으면 그대로 두고, 덜 왔으면 준비된 풀이(두 장면)
    - 모든 요청 본문에 학생의 한 줄 메모가 없어야 하고, pageerror·console error 가 없어야 합니다. */
 let pw;
@@ -53,7 +58,8 @@ async function serveMock(req,res,sid){
   const sc=scenes.get(sid);
   let raw="";for await(const ch of req)raw+=ch;
   const body=JSON.parse(raw);
-  const kind=body.stream?(Array.isArray(body.system)?"reading":"chat"):body.max_tokens===10?"test":"extras";
+  const sys=Array.isArray(body.system)?body.system[0].text:body.system;
+  const kind=body.stream?(sys===P.READING_SYSTEM?"reading":"chat"):body.max_tokens===10?"test":"extras";
   const call={kind,body,raw,headers:req.headers,t:Date.now(),closedEarly:false,done:false};
   sc.calls.push(call);
   res.on("close",()=>{if(!call.done)call.closedEarly=true});
@@ -243,7 +249,9 @@ const SCENES={
       check((await page.evaluate(()=>state.reading)).includes("AI리딩4"),"state.reading should hold the AI text (plain)");
       // 정리(JSON): 질문 버튼은 AI 질문 3개(4번째는 버려짐), 목록에 없는 향기는 버려짐
       await page.waitForFunction(()=>extras&&extras.g===gen,null,{timeout:5000});
-      check(h.of("extras").length===1&&h.of("extras")[0].body.max_tokens===500&&!h.of("extras")[0].body.stream,"one non-streamed extras call with max_tokens 500");
+      const ex=h.of("extras");
+      check(ex.length===1&&ex[0].body.max_tokens===500&&!ex[0].body.stream,"one non-streamed extras call with max_tokens 500");
+      check(ex[0].body.system[0].text===P.EXTRAS_SYSTEM&&ex[0].body.system[0].cache_control.type==="ephemeral","extras system should be cached");
       const chips=await page.$$eval("#chips .chip",cs=>cs.map(c=>c.textContent));
       check(JSON.stringify(chips)===JSON.stringify(EXTRA_QS.slice(0,3)),"chips should be the AI questions: "+chips.join(" | "));
       // 대화: 질문 버튼 → 답이 말풍선 하나에 흘러 들어옴, AI 답이라 남은 질문 3 → 2
@@ -260,7 +268,7 @@ const SCENES={
       check(last.src==="AI 답변"&&last.text.includes("AI대답1"),"streamed answer: "+JSON.stringify(last));
       check((await h.hint()).includes("남은 질문 2개"),"an AI answer should use up one question");
       const c1=h.of("chat")[0];
-      check(c1.body.system===P.QA_SYSTEM&&c1.body.stream===true&&!("thinking" in c1.body)&&c1.body.messages[0].content.includes("AI리딩1"),"chat request should carry QA_SYSTEM, stream, no thinking, and the AI reading");
+      check(c1.body.system[0].text===P.QA_SYSTEM&&c1.body.system[0].cache_control.type==="ephemeral"&&c1.body.stream===true&&!("thinking" in c1.body)&&c1.body.messages[0].content.includes("AI리딩1"),"chat request should carry QA_SYSTEM, stream, no thinking, and the AI reading");
       check(c1.body.messages[c1.body.messages.length-1].content.includes(EXTRA_QS[0]),"chip question not sent");
       // 500 → 준비된 답변, 남은 질문 수 그대로
       await h.askQ("역방향은 나쁜 건가요?");
@@ -321,7 +329,11 @@ const SCENES={
       check(await page.evaluate(()=>document.body.classList.contains("flagged")&&state.flag&&state.flag.from==="ai"),"reading marker should raise the flag");
       check(await flags()===1,"flag timestamp not logged");
       check(!(await page.textContent("#screen")).includes("[도움필요]"),"marker text shown to the student");
+      // 도움 안내가 카드 단계 위에 떠 있는 동안 화면을 돌려도(크기 바꾸기) 오류 없음 — 부채꼴이 없으니 다시 펼치지 않음
+      await page.setViewportSize({width:1024,height:768});await wait(150);
+      await page.setViewportSize({width:1366,height:768});await wait(150);
       await h.hold(1700);
+      check(await page.evaluate(()=>document.body.classList.contains("flagged")),"crest cue must stay until 확인했어요 in Settings");
       await page.locator("#helpnav .btn",{hasText:"이어서 하기"}).click();
       await page.waitForSelector("#screen.s-draw");
       await page.waitForFunction(()=>!document.getElementById("go").disabled,null,{timeout:6000});
@@ -334,6 +346,16 @@ const SCENES={
       const st=await page.evaluate(()=>({askCount,hist:chatHistory.length,me:chatLog.filter(m=>m.who==="me").length}));
       check(st.askCount===0&&st.hist===0&&st.me===0,"chat marker: question kept or counted "+JSON.stringify(st));
       check(await flags()===2,"second flag not logged");
+      // 새로고침해도 도움 안내가 다시 뜸(앞 학생의 카드·대화는 없이), 기록은 늘지 않음 · 선생님 확인 → 처음부터 → 표지
+      await page.reload({waitUntil:"load"});
+      await page.waitForSelector("#screen.s-help .helpcard",{timeout:5000});
+      const rs=await page.evaluate(()=>({draw:state.draw.length,log:chatLog.length,flagged:document.body.classList.contains("flagged")}));
+      check(rs.draw===0&&rs.log===0&&rs.flagged&&await flags()===2,"reload should bring back only the help card: "+JSON.stringify(rs));
+      await h.hold(1700);
+      await h.nav("#helpnav .btn.primary");
+      await page.waitForSelector("#screen.cover");
+      await page.reload({waitUntil:"load"});
+      check(await page.locator("#screen.cover").count()===1,"after the teacher's 처음부터 a reload should show the cover");
       await h.finish();
     }finally{await h.ctx.close()}
   },
@@ -373,7 +395,7 @@ const SCENES={
       // 처음 화면으로 — 그 뒤로 화면에 '옛학생'이 한 번이라도 나타나면 기록
       student=2;
       await h.nav(".menubtn");
-      await page.locator("#sheet .row",{hasText:"처음 화면"}).click();
+      await h.nav("#sheet .row:has-text('처음 화면')");
       await page.waitForSelector("#screen.cover");
       await page.evaluate(()=>{window.__stale=0;new MutationObserver(()=>{if(document.getElementById("screen").textContent.includes("옛학생"))window.__stale++}).observe(document.body,{subtree:true,childList:true,characterData:true})});
       await wait(300);
@@ -419,9 +441,12 @@ const SCENES={
       check(JSON.stringify(b.body.thinking)==='{"type":"between_tools"}'&&!("fallbacks" in b.body)&&!b.headers["anthropic-beta"],"retry must drop only fallbacks and the beta header");
       check(a.body.system[0].text===b.body.system[0].text&&a.body.messages[0].content===b.body.messages[0].content,"retry must resend the same prompt");
       await page.waitForFunction(()=>extras&&extras.g===gen,null,{timeout:5000});
+      // 400 을 한 번 받았으니 이 페이지의 다음 요청(정리·대화)은 처음부터 베타·fallbacks 없이 한 번만
+      const ex=h.of("extras");
+      check(ex.length===1&&!("fallbacks" in ex[0].body)&&!ex[0].headers["anthropic-beta"]&&ex[0].body.thinking.type==="between_tools","extras after a rejected beta: "+ex.length);
       await h.askQ("이 카드는 무슨 뜻이에요?");
       const c=h.of("chat");
-      check(c.length===1&&c[0].body.fallbacks==="default"&&c[0].headers["anthropic-beta"]==="server-side-fallback-2026-07-01"&&c[0].body.thinking.type==="between_tools","sonnet chat request (no retry on 200)");
+      check(c.length===1&&!("fallbacks" in c[0].body)&&!c[0].headers["anthropic-beta"]&&c[0].body.thinking.type==="between_tools","sonnet chat after a rejected beta: one request, no beta");
       check((await h.lastAi()).text.includes("소넷대답"),"sonnet chat answer");
       await h.finish();
     }finally{await h.ctx.close()}
@@ -440,9 +465,73 @@ const SCENES={
       check(JSON.stringify(chips)===JSON.stringify(C.CHAT_CHIPS),"static chips: "+chips.join(" | "));
       await page.locator("#chips .chip").nth(1).click();
       await page.waitForFunction(()=>document.querySelectorAll("#chatlog .msg").length===3&&!document.querySelector("#chatlog .msg.pending"),null,{timeout:8000});
-      check((await h.lastAi()).src==="준비된 답변"&&(await h.hint()).includes("남은 질문 3개"),"chip without a key → prepared answer, count unchanged");
+      check((await h.lastAi()).src==="준비된 답변"&&(await h.hint())==="","chip without a key → prepared answer, no question counter (it would never go down)");
       const after=await page.$$eval("#chips .chip",cs=>cs.map(c=>c.textContent));
       check(!after.includes(C.CHAT_CHIPS[1])&&after.length===2,"asked chip should disappear: "+after.join(" | "));
+      await h.finish();
+    }finally{await h.ctx.close()}
+  },
+
+  async midmarker(browser){
+    const h=await open(browser,"midmarker",{cfg:HAIKU_CFG,handler:call=>{
+      if(call.kind==="reading"){
+        const first=readingFor(call,"앞글",1)+"\n";
+        // 첫 부분 + '[도' → 700ms 뒤 '움필요] …' (리딩 화면이 열린 뒤에 오도록 천천히)
+        return {sse:sse(first+"[도움필요] 말해 줘서 고마워요.",{n:first.length+2}),gap:700};
+      }
+      if(call.kind==="chat")return {sse:sse("도움필요 말해 줘서 고마워요. 선생님께 이 화면을 보여 주세요. 1388",{n:3}),gap:30};
+      return apiError(500);
+    }});
+    const {page}=h;
+    try{
+      await h.walk();
+      await page.evaluate(()=>{window.__peek=[];window.__rec=setInterval(()=>window.__peek.push(document.getElementById("screen").textContent),10)});
+      await page.waitForSelector("#screen.s-help .helpcard",{timeout:10000});
+      const peek=await page.evaluate(()=>{clearInterval(window.__rec);return window.__peek});
+      check(peek.some(t=>t.includes("앞글1")),"the first section should have been on screen before the marker");
+      check(!peek.some(t=>/\[도|도움필요/.test(t)),"part of the [도움필요] marker was shown");
+      await h.hold(1700);
+      await page.locator("#helpnav .btn",{hasText:"이어서 하기"}).click();
+      await page.waitForSelector("#screen.s-reading");
+      check(await h.tag()==="준비된 풀이","after the marker the prepared reading should show");
+      // 대화: AI가 괄호를 빼먹은 '도움필요' → 도움 안내, 질문은 세지도 남기지도 않음
+      await page.fill("#q","이 카드는 무슨 뜻이에요?");
+      await page.click("#askbtn");
+      await page.waitForSelector("#screen.s-help .helpcard",{timeout:8000});
+      const st=await page.evaluate(()=>({askCount,hist:chatHistory.length,me:chatLog.filter(m=>m.who==="me").length}));
+      check(st.askCount===0&&st.hist===0&&st.me===0,"bracketless marker: question kept or counted "+JSON.stringify(st));
+      await h.finish();
+    }finally{await h.ctx.close()}
+  },
+
+  async aioff(browser){
+    const h=await open(browser,"aioff",{cfg:HAIKU_CFG,handler:call=>{
+      if(call.kind==="reading")return {sse:sse(readingFor(call,"느린글"),{n:6}),gap:150};
+      if(call.kind==="chat")return {sse:sse("대답이에요. 카드를 보며 천천히 생각해 볼 수 있어요.",{n:4}),gap:20};
+      if(call.kind==="extras")return extrasFor(call);
+    }});
+    const {page}=h;
+    try{
+      await h.walk();
+      await page.waitForFunction(()=>document.getElementById("reading").textContent.includes("느린글1"),null,{timeout:10000});
+      // 리딩이 오는 중에 질문 버튼 → 함께 보내는 리딩은 화면에 보이는 AI 글(뒤에 숨은 준비된 풀이가 아님)
+      await page.locator("#chips .chip").first().click();
+      await page.waitForFunction(()=>!document.querySelector("#chatlog .msg.pending")&&document.querySelectorAll("#chatlog .msg").length===3,null,{timeout:8000});
+      const c=h.of("chat")[0],first=c.body.messages[0].content;
+      check(first.includes("느린글1")&&!first.includes("내가 고른 색"),"chat context should be the AI text on screen, not the hidden template: "+first.slice(0,300));
+      check(await page.evaluate(()=>aiRead.st)==="run","the reading should still be streaming here");
+      // 'AI 기능 끄기' → 리딩 요청이 끊기고, 준비된 풀이가 표시 없이, 정리 요청은 없음
+      await h.nav(".menubtn");
+      await h.nav("#sheet .row:has-text('설정')");
+      await wait(400);
+      await page.check("#aioff");
+      await page.keyboard.press("Escape");
+      await wait(400);
+      check(await h.tag()===""&&await page.innerHTML("#reading")===await h.localHtml(),"AI off should show the prepared reading with no tag");
+      check(await page.locator("#q").count()===0,"chat should disappear when AI is turned off");
+      await wait(2500);
+      check(h.of("reading")[0].closedEarly&&h.of("extras").length===0,"AI off must abort the reading and never send extras");
+      check(!(await h.readingText()).includes("느린글")&&await page.evaluate(()=>!state.reading.includes("느린글")),"AI text left behind after AI off");
       await h.finish();
     }finally{await h.ctx.close()}
   },

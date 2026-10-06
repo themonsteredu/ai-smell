@@ -35,7 +35,8 @@ const SAFETY_BLOCK=`[안전 규칙 — 가장 먼저 지키고, 아래 다른 �
 ② 집·학교·학원에서 맞거나 학대를 당한다는 이야기
 ③ 누군가 몸을 만지는 등 성적으로 불편한 일을 겪었다는 이야기
 ④ 괴롭힘·따돌림·협박을 당한다는 이야기
-⑤ 친구나 다른 사람이 위험하다는 이야기
+⑤ 친구나 다른 사람이 위험하다는 이야기, 다른 사람을 다치게 하고 싶다는 이야기
+돌려 말하거나 줄임말·은어·영어로 말해도(예: 뒤지고 싶다, 자살 마렵다, 삥 뜯겼다, 빵셔틀, kms) 같은 이야기로 봅니다.
 이때는 이렇게만 답합니다.
 - 답의 맨 앞에 ${S.MARKER} 를 그대로 붙입니다.
 - 말해 줘서 고맙다고 합니다.
@@ -55,6 +56,7 @@ const QA_SYSTEM=`${SAFETY_BLOCK}
 - 미래를 예언하지 않습니다. 심리 진단이나 의학적 조언을 하지 않습니다.
 - 3~4문장, 초등학교 3학년도 이해할 수 있는 쉬운 해요체로 답합니다.
 - 단정하지 말고 "~일 수 있어요", "~해 보면 어떨까요"처럼 부드럽게 말합니다.
+- 마크다운(**, #, 목록 기호)이나 이모지를 쓰지 않습니다.
 - 죽음·탑처럼 무서워 보이는 카드는 '끝'이 아니라 '바뀌는 때'로 설명하고, 무섭게 풀지 않습니다.
 - 학생의 이름·학교·사는 곳·연락처 같은 개인정보를 묻지 않고, 학생이 적어도 되풀이하지 않습니다.
 - 숙제 대신 풀기나 게임처럼 타로와 상관없는 요청에는 "오늘은 카드 이야기만 나눠요"라고 짧게 답합니다.
@@ -232,16 +234,31 @@ ${list}
 약속한 모양의 JSON 하나만 답해 주세요.`;
 }
 
+/* 글 속의 { … } 덩어리를 앞에서부터 하나씩 꺼내(괄호 짝을 세고, 따옴표 안의 괄호는 세지 않음) JSON 으로 읽어 봄.
+   scents 나 questions 목록이 있는 첫 덩어리를 돌려줌 — 앞뒤에 '{예시}' 같은 다른 괄호 글이 섞여도 괜찮게 */
+function firstJson(s){
+  for(let a=s.indexOf("{");a>=0;a=s.indexOf("{",a+1)){
+    let depth=0,str=false,esc=false;
+    for(let i=a;i<s.length;i++){
+      const c=s[i];
+      if(str){if(esc)esc=false;else if(c==="\\")esc=true;else if(c==='"')str=false;continue}
+      if(c==='"')str=true;
+      else if(c==="{")depth++;
+      else if(c==="}"&&--depth===0){
+        try{const j=JSON.parse(s.slice(a,i+1));if(j&&typeof j==="object"&&(Array.isArray(j.scents)||Array.isArray(j.questions)))return j}catch(e){}
+        break;
+      }
+    }
+  }
+  return null;
+}
 /* 정리 답 → {scents:{향기 이름:{reason?, ask?}}, questions:[…]}.
-   글 속 첫 { 부터 마지막 } 까지를 JSON 으로 읽고, 칸마다 확인해 틀린 것은 버림(길이·위험한 말·단정하는 말).
+   글 속의 JSON 덩어리(firstJson)를 읽고, 칸마다 확인해 틀린 것은 버림(길이·위험한 말·단정하는 말).
    향기 이름은 앱이 고른 이름(names)과 글자 하나까지 같아야 받아요 */
 function parseExtras(text,names){
   const out={scents:{},questions:[]};
-  const s=String(text||""),a=s.indexOf("{"),b=s.lastIndexOf("}");
-  if(a<0||b<a)return out;
-  let j;
-  try{j=JSON.parse(s.slice(a,b+1))}catch(e){return out}
-  if(!j||typeof j!=="object")return out;
+  const j=firstJson(String(text||""));
+  if(!j)return out;
   const fine=(t,max)=>typeof t==="string"&&(t=t.trim()).length>=2&&t.length<=max&&!/[\n<>]/.test(t)
     &&!S.check(t)&&!S.hasMarker(t)&&!FORBIDDEN.test(t);
   (Array.isArray(j.scents)?j.scents:[]).forEach(x=>{

@@ -113,7 +113,10 @@ test("heavy() follows each card's meaning, not just its orientation",()=>{
   assert.notEqual(R.combine(card("달",true),card("십자가",true),card("컵 2")),R.FLOW.knot);
   assert.notEqual(R.combine(card("컵 4",true),card("컵 5",true),card("컵 7",true)),R.FLOW.knot);
   // 정방향인데 무거운 카드 두 장 → '엉켜 있다'
-  assert.equal(R.combine(card("탑"),card("달"),card("바보")),R.FLOW.knot);
+  assert.equal(R.combine(card("컵 5"),card("달"),card("바보")),R.FLOW.knot);
+  // 뜻을 부드럽게 고친 탑(갑자기 깨닫기)·컵 8(떠남)은 정방향이면 무거운 카드로 세지 않음
+  assert.ok(!R.heavy(card("탑"))&&!R.heavy(card("컵 8")));
+  assert.equal(R.combine(card("탑"),card("컵 8"),card("바보")),R.FLOW.light);
   // 마지막 카드가 거꾸로 나온 밝은 카드면 '밝은 쪽'이라 하지 않음
   assert.equal(R.combine(card("컵 3"),card("컵 2"),card("컵 9")),R.FLOW.bright);
   assert.notEqual(R.combine(card("컵 3"),card("컵 2"),card("컵 9",true)),R.FLOW.bright);
@@ -147,11 +150,28 @@ test("local answers depend on the question and rotate, and use the drawn cards",
   const same=[0,1,2].map(n=>R.localAnswer("이 카드는 무슨 뜻이에요?",n,s));
   assert.equal(new Set(same).size,3,"same question should rotate");
   assert.ok(R.localAnswer("역방향은 나쁜 건가요?",0,s).includes("컵 8"),"reversed answer names the reversed card");
-  assert.ok(R.localAnswer("죽음 카드 무서워요",0,s).includes(card("죽음").notLiteral),"scary answer uses the not-literal note");
+  const lit=ko=>card(ko).notLiteral.replace(/^이 카드는 /,"");
+  assert.ok(R.localAnswer("죽음 카드 무서워요",0,s).startsWith("죽음은 "+lit("죽음")),"scary answer names the card and uses its not-literal note");
+  // 물어본 카드의 안심 문장 — 죽음이 먼저 뽑혀 있어도 탑을 물으면 탑
+  const scary={draw:[card("죽음"),card("탑"),card("교황")],topic:"가족",scents:[]};
+  for(const q of ["탑 카드 무서워요","탑이 무서워요"])assert.ok(R.localAnswer(q,0,scary).startsWith("탑은 "+lit("탑")),q);
+  // 그림 이야기의 '나라면?' 질문(이걸 물어볼래요)은 그 카드를 두고 답함 — 거꾸로·방법 같은 낱말이 있어도
+  for(const d of [card("매달린 사람"),card("죽음",true),card("교황")]){
+    const st={draw:[d,card("컵 2"),card("열쇠")],topic:"가족",scents:[]};
+    for(const q of [d.ask,d.ko+" 카드: "+d.ask]){
+      const a=R.localAnswer(q,0,st);
+      assert.ok(a.startsWith(d.ko+" 카드 그림")&&a.includes(d.ask),q+" → "+a);
+    }
+  }
+  // 앞일을 묻는 질문에는 카드가 미래를 맞히지 않는다고 답함
+  for(const q of ["시험 잘 볼 수 있을까요?","내일 좋은 일 생길까요?"])assert.ok(R.localAnswer(q,0,s).startsWith("카드는 미래를 맞히지 않아요"),q);
+  // 내 이야기(가족·친구)에는 먼저 고맙다고 하고, 다른 주제의 한 줄을 붙이지 않음
+  const mine=R.localAnswer("엄마한테 혼났어요",0,s);
+  assert.ok(mine.startsWith("이야기해 줘서 고마워요")&&!mine.includes(C.TOPIC_HOOK["친구 관계"]),mine);
   assert.ok(R.localAnswer("열쇠 카드는 무슨 뜻이에요?",0,s).startsWith("열쇠는"),"a named card is answered first");
   assert.ok(R.localAnswer("향기는요?",0,s).includes(s.scents[0].name),"scent answer names the scents");
   const up={draw:[card("바보"),card("컵 2"),card("정원")],topic:"가족",scents:[]};
-  assert.ok(R.localAnswer("거꾸로 나오면 어때요?",0,up).includes("세 장 모두 바로"),"no reversed card case");
+  assert.ok(R.localAnswer("거꾸로 나오면 어때요?",0,up).includes("세 장 모두 똑바로"),"no reversed card case");
   for(const q of QUESTIONS)assert.ok(!/니다[.!? ]|습니다/.test(R.localAnswer(q,1,s)),"합니다체: "+q);
 });
 
@@ -161,8 +181,18 @@ test("pickScents works with a short teacher list and with moods no card uses",()
   const r=R.pickScents(draw,two);
   assert.equal(r.length,2);assert.equal(new Set(r.map(x=>x.name)).size,2);
   const odd=[{name:"X",mood:"balance",desc:""},{name:"Y",mood:"balance",desc:""},{name:"Z",mood:"balance",desc:""}];
+  // 카드의 향기 결과 맞는 향기만 그 카드 자리(from)를 받고, 맞는 카드가 없으면 from:null
+  const moods=c=>c.scent.map(n=>C.SCENT_MOOD[n]);
   const o=R.pickScents([card("바보"),card("바보"),card("바보")],odd);
-  assert.equal(o.length,3);assert.ok(o.every(x=>x.from===null||x.mood==="balance"));
+  assert.equal(o.length,3);assert.ok(o.every(x=>x.from===null),"바보 has no balance scent, so nothing is linked to it");
+  const mixed=[...odd,{name:"L",mood:"bright",desc:""},{name:"C",mood:"calm",desc:""}];
+  for(let k=0;k<300;k++){
+    const deck=R.makeDeck(),d3=[];for(let i=0;i<3;i++)d3.push(R.drawOne(deck,i,d3));
+    for(const lib of [mixed,C.DEFAULT_SCENTS])for(const x of R.pickScents(d3,lib))
+      assert.ok(x.from===null||moods(d3[x.from]).includes(x.mood),`${x.name}(${x.mood}) linked to ${d3[x.from]&&d3[x.from].ko}`);
+  }
+  const m=R.pickScents([card("바보"),card("컵 2"),card("닻")],mixed);
+  assert.ok(m.some(x=>x.name==="L"&&x.from===0),"레몬 결(bright) of 바보 links the bright scent to slot 0");
 });
 
 test("makeDeck(n): smaller phone fan, never more than FAN_MAX or the visible pool, never a hidden card",()=>{

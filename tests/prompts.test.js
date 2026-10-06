@@ -18,6 +18,8 @@ test("QA system prompt starts with the safety block and has the marker and only 
   assert.ok(!P.QA_SYSTEM.includes("1393"));
   assert.ok(!P.QA_SYSTEM.includes("흉보기"),"off-topic rule must not list 다른 사람 흉보기");
   assert.ok(P.QA_SYSTEM.includes("선생님"));
+  assert.ok(/줄임말·은어·영어/.test(P.SAFETY_BLOCK)&&P.SAFETY_BLOCK.includes("다치게 하고 싶다"),"slang, English and wanting to hurt others count too");
+  assert.ok(P.QA_SYSTEM.includes("마크다운"),"chat answers: no markdown/emoji");
 });
 
 test("first turn is built from content.js meanings, includes color, and ends with the safety reminder",()=>{
@@ -120,7 +122,7 @@ test("buildReadingUser carries only color, topic and the three cards (no note), 
   const u=P.buildReadingUser(ctx);
   assert.equal(u,P.buildReadingUser({...ctx}));
   assert.ok(u.includes("[학생이 고른 감정 색] 파랑 — "+C.COLOR_MEANING["파랑"]));
-  assert.ok(u.includes("[학생이 고른 주제] 친구 관계 — 관계에서 느끼는 거리와 기대"));
+  assert.ok(u.includes("[학생이 고른 주제] 친구 관계 — "+C.topics[1][1]));
   assert.ok(u.includes("2. 보이지 않는 영향 — 죽음 역방향 ("+C.cards.find(c=>c.ko==="죽음").down+")"));
   assert.ok(!P.buildReadingUser({...ctx,note:"비밀 메모"}).includes("비밀"),"extra fields (a note) must never be copied in");
   assert.equal(P.buildReadingUser.length,1);
@@ -170,6 +172,12 @@ test("parseExtras keeps only valid fields for the app's own scents and safe shor
   assert.equal(r.scents["라벤더"].reason,undefined,"reason over 60 chars is dropped");
   assert.equal(r.scents["라벤더"].ask,"차분해지는 곳은 어디예요?");
   assert.deepEqual(r.questions,["친구에게 먼저 말해도 될까요?","오늘 뭘 해 보면 좋을까요?","왜 거꾸로 나왔어요?"]);
+  // 앞뒤에 다른 { } 글이 있어도, 객체가 둘이어도 정리 JSON 을 찾음(따옴표 안의 괄호는 세지 않음)
+  const one=JSON.stringify({scents:[ok.scents[0]],questions:["{괄호}도 괜찮아요?"]});
+  for(const t of ["형식 {JSON} 으로 답할게요\n"+one,one+"\n(참고: {이름}은 그대로예요)","{\"a\":1}\n"+one,"{예시 아님}"+one,"형식 { 으로 "+one]){
+    const x=P.parseExtras(t,names);
+    assert.deepEqual(Object.keys(x.scents),["레몬"],t);assert.deepEqual(x.questions,["{괄호}도 괜찮아요?"],t);
+  }
   for(const bad of ["","그냥 글이에요","{깨진 json","[1,2,3]",JSON.stringify({scents:"x",questions:"y"}),"null"])
     assert.deepEqual(P.parseExtras(bad,names),{scents:{},questions:[]},bad);
   assert.ok(!S.check(C.CHAT_CHIPS.join(" "))&&C.CHAT_CHIPS.every(q=>q.length<=25),"static chips are short and safe");

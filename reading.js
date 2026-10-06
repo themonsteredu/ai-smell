@@ -53,10 +53,10 @@ const heavy=c=>c.rev?!c.lightDown:!!c.heavyUp;
 /* '세 카드의 흐름' 요약 — 어느 문장이 나올지는 combine() 이 정해요 */
 const FLOW={
   knot:"지금은 마음이 조금 엉켜 있거나 무거운 때일 수 있어요. 서둘러 답을 찾기보다, 무엇이 나를 멈추게 하는지 먼저 천천히 살펴보면 좋겠어요.",
-  bright:"마지막 카드는 밝은 쪽을 바라보는 마음을 떠올리게 해요. 무리해서 밝아지려 하기보다, 오늘 있었던 작은 좋은 일 하나를 찾아보면 어떨까요?",
+  bright:"마지막 카드는 밝은 쪽을 바라보는 마음을 떠올리게 해요. 무리해서 밝아지려 하기보다, 오늘 있었던 좋은 일을 떠올려 보면 어떨까요?",
   light:"세 카드 모두 부드러운 쪽의 뜻이 나왔어요. 지금 내 안에 있는 좋은 힘을 알아차리고, 그 힘을 어디에 써 볼지 생각해 보세요.",
-  turn:"지금은 마음이 조금 힘들어도, 그 안에서 방법이 보이기 시작할 수 있어요. 작은 행동 하나가 흐름을 바꿀 수 있어요.",
-  mixed:"세 카드에는 가벼운 마음과 무거운 마음이 함께 있어요. 둘 다 내 마음이에요. 지금 할 수 있는 작은 일 하나부터 시작해 보세요."
+  turn:"지금은 마음이 조금 힘들어도, 그 안에서 방법이 보이기 시작할 수 있어요.",
+  mixed:"세 카드에는 가벼운 마음과 무거운 마음이 함께 있어요. 둘 다 내 마음이에요."
 };
 function combine(a,b,c){
   const n=[a,b,c].filter(heavy).length;
@@ -124,31 +124,37 @@ const CLOSE=["정답은 없으니 편하게 생각해 보세요.","내 생각을
 function localAnswer(q,n,s){
   const d=s.draw,t=String(q||""),i=Math.max(0,n|0);
   const named=d.find(x=>t.includes(x.ko)),turn=named||d[i%d.length];
+  const story=d.find(x=>x.ask&&t.includes(x.ask));   // 그림 이야기의 '나라면?' 질문(이걸 물어볼래요)이면 그 카드
   const first=x=>quote(words(x)[0]);
   const about=x=>`${josa(x.ko,"은","는")} ${x.rev?"거꾸로 나와서 ":""}${josa(first(x),"을","를")} 떠올리게 하는 카드예요. ‘${C.roles[d.indexOf(x)]}’ 자리에 있으니, ${ROLE_SEE[d.indexOf(x)]}${x.notLiteral?" "+x.notLiteral:""}`;
   let body;
-  if(/거꾸로|역방향|뒤집/.test(t)){
+  if(story){
+    body=`${story.ko} 카드 그림을 다시 떠올려 보세요. ${josa(story.ko,"은","는")} ${story.rev?"거꾸로 나와서 ":""}${josa(first(story),"을","를")} 떠올리게 해요. 이 뜻을 생각하며 ‘${story.ask}’에 떠오르는 대로 답해 보세요.`;
+  }else if(/거꾸로|역방향|뒤집/.test(t)){
     const r=named&&named.rev?named:d.find(x=>x.rev);
     body=r?`거꾸로 나온 카드는 나쁜 뜻이 아니라, 같은 그림을 다른 쪽에서 본 거예요. ${josa(r.ko,"은","는")} 거꾸로 나와서 ${josa(first(r),"을","를")} 떠올리게 해요. 이런 마음이 나에게도 있는지 살펴보는 기회로 삼아 보세요.`
-      :"이번에는 세 장 모두 바로 나왔어요. 카드가 거꾸로 나오면 ‘역방향’이라고 하는데, 나쁜 뜻이 아니라 같은 그림을 다른 쪽에서 보는 거예요.";
+      :"이번에는 세 장 모두 똑바로(정방향으로) 나왔어요. 카드가 거꾸로 나오면 ‘역방향’이라고 하는데, 나쁜 뜻이 아니라 같은 그림을 다른 쪽에서 보는 거예요.";
   }else if(/무서|무섭|죽음|나쁜|불길|겁나/.test(t)){
-    const x=d.find(x=>x.notLiteral);
-    body=x?`${x.notLiteral} 그래도 무섭게 느껴졌다면 선생님께 이야기해도 괜찮아요.`
+    const x=named&&named.notLiteral?named:d.find(x=>x.notLiteral);   // 물어본 카드가 죽음·탑이면 그 카드, 아니면 뽑은 죽음·탑
+    body=x?`${josa(x.ko,"은","는")} ${x.notLiteral.replace(/^이 카드는 /,"")} 그래도 무섭게 느껴졌다면 선생님께 이야기해도 괜찮아요.`
       :"타로 카드는 미래를 맞히거나 나쁜 일을 알려 주는 게 아니에요. 카드 그림을 보며 내 마음을 떠올려 보는 활동이에요. 무서운 마음이 들면 선생님께 이야기해 보세요.";
   }else if(/향|냄새/.test(t)&&s.scents&&s.scents.length){
     const sc=s.scents[i%s.scents.length];
     body=`추천 향기는 ${josa(s.scents.map(x=>x.name).join(", "),"이에요","예요")}. ${josa(sc.name,"은","는")} ${josa(C.MOOD_DESC[sc.mood]||"카드와 어울리는 향기","이에요","예요")}. 눈을 감고 맡아 본 뒤, 지금 내 마음과 가장 닮은 향기를 직접 골라 보세요.`;
   }else if(/숨은|숨어|숨겨|보이지|영향|속마음/.test(t)){
     const b=d[1];
-    body=`‘${C.roles[1]}’ 자리에는 ${josa(b.ko,"이","가")} 놓였어요. ${josa(first(b),"은","는")} 겉으로는 잘 안 보여도 마음 한쪽에 함께 있을 수 있는 마음이에요. 요즘 나도 모르게 이런 마음이 들었는지 떠올려 보세요.`;
+    body=`‘${C.roles[1]}’ 자리에는 ${josa(b.ko,"이","가")} 놓였어요. 이 카드는 ${josa(first(b),"을","를")} 떠올리게 해요. 겉으로는 잘 안 보여도 이런 마음이 마음 한쪽에 있을 수 있어요. 요즘 나도 모르게 이런 마음이 들었는지 떠올려 보세요.`;
   }else if(/왜|이유/.test(t)){
-    body=`카드는 섞인 것 가운데 내가 고른 거라, 꼭 정해진 이유가 있는 건 아니에요. 대신 ${turn.ko} 카드를 거울처럼 보고, ${josa(first(turn),"이라는","라는")} 뜻이 요즘 나와 닮았는지 생각해 보세요.`;
+    body=`카드는 잘 섞은 뒤 내가 고른 거라, 꼭 정해진 이유가 있는 건 아니에요. 대신 ${turn.ko} 카드를 거울처럼 보고, ${josa(first(turn),"이라는","라는")} 뜻이 요즘 나와 닮았는지 생각해 보세요.`;
+  }else if(/미래|내일|나중에|커서|될까|생길까|붙을까|합격|이길까|잘 ?(?:볼|될|할) ?수/.test(t)){   // 앞일을 묻는 질문 — 카드는 앞일을 맞히지 않아요
+    const x=named||d[2];
+    body=`카드는 미래를 맞히지 않아요. 대신 ${josa(x.ko,"이","가")} 보여 주는 ${josa(first(x),"을","를")} 떠올리며, 그 일을 위해 오늘 해 볼 수 있는 일을 생각해 보세요.`;
   }else if(/어떻게|뭘|무엇을|방법|해야|할까|하면|행동|해 ?볼/.test(t)){
     const x=named||d[2];
     body=`‘${C.roles[d.indexOf(x)]}’ 자리의 ${josa(x.ko,"은","는")} ${josa(first(x),"을","를")} 떠올리게 해요. `
       +(heavy(x)?"이런 마음이 들 때는 잠깐 멈추고, 천천히 할 수 있는 일부터 골라 보세요.":"이 마음을 오늘 할 수 있는 작은 행동 하나로 바꿔 본다면 무엇이 있을까요?");
-  }else if(/친구|가족|공부|시험|숙제|학교|학원|엄마|아빠|부모|형|누나|언니|오빠|동생/.test(t)&&s.topic){
-    body=`${josa(quote(s.topic),"이라는","라는")} 주제로 보면, ${josa(turn.ko,"이","가")} 보여 주는 ${josa(first(turn),"이","가")} 그 마음과 닮았는지 생각해 보세요. ${C.TOPIC_HOOK[s.topic]||""}`.trim();
+  }else if(/친구|가족|공부|시험|숙제|학교|학원|엄마|아빠|부모|형|누나|언니|오빠|동생/.test(t)){   // 내 이야기를 했을 때 — 먼저 고맙다고 하고 카드와 이어 봄
+    body=`이야기해 줘서 고마워요. ${josa(turn.ko,"이","가")} 보여 주는 ${josa(first(turn),"이","가")} 지금 내 이야기와 닮은 점이 있는지 천천히 생각해 보세요.`;
   }else body=about(turn);
   return `${body} ${CLOSE[i%CLOSE.length]}`;
 }

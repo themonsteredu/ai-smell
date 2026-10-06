@@ -102,6 +102,8 @@ test("every card (all 42, hidden ones too) has a picture story: story, 2-3 look 
     assert.equal(new Set(c.look.map(p=>p[0])).size,c.look.length,c.ko+": duplicate symbol");
     // '이걸 물어볼래요'로 질문 칸에 들어가는 글 — 짧은 물음, 질문 칸 길이(300자) 안
     assert.ok(typeof c.ask==="string"&&/\?$/.test(c.ask.trim())&&c.ask.length<=40,c.ko+": ask should be one short question");
+    // 질문 칸에는 '카드 이름 카드: 질문'으로 들어감(askThis) — 그 모양으로도 안전 확인에 걸리지 않아야 함
+    assert.equal(S.check(c.ko+" 카드: "+c.ask),null,c.ko+": the prefilled question trips the safety check");
     for(const t of [c.story,c.ask,...c.look.flat()]){
       assert.ok(!/니다[.!? ]|습니다|니다$/.test(t),c.ko+": student copy should be 해요체: "+t);
       assert.equal(S.check(t),null,c.ko+": story text trips the safety check (the help card would open): "+t);
