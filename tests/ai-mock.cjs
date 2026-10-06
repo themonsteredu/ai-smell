@@ -151,7 +151,8 @@ async function open(browser,sid,{vp={width:1366,height:768},cfg=null,handler}){
   h.pick3=async()=>{
     for(let k=0;k<3;k++){
       await page.locator("#fan .card:not(.hide)").nth(3+k).dispatchEvent("click");
-      await page.waitForFunction(k=>document.querySelectorAll("#slots .slot.filled").length===k+1&&!document.querySelector("#fan .card.chosen"),k,{timeout:8000});
+      // 화면(DOM)이 아니라 앱 상태로 기다림 — marker 장면은 세 장째가 놓이자마자 도움 안내 화면이 카드 칸을 덮어서
+      await page.waitForFunction(k=>state.draw.length===k+1&&!picking,k,{timeout:8000});
     }
   };
   h.toReading=async()=>{await h.nav("#go");await page.waitForSelector("#screen.s-reading")};

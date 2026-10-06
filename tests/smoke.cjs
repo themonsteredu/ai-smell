@@ -14,6 +14,8 @@
      뒤집은 카드가 탁자 안에 다 보이는지, 리딩 글이 15px 밑으로 줄지 않는지, 설정 '저장'이 창 안에 있는지,
      Esc·바깥 누르기·고친 내용 확인, '기본값으로'가 저장 전에는 향기 목록을 지우지 않는지, 키보드로 카드 고르기,
      한글 조합 중 Enter 로 질문이 나가지 않는지.
+   - 재미 요소 점검(fun)을 390x844 · 1366x768 에서 한 번씩, 읽어 주기가 없는 브라우저로 390x844 에서 한 번 더:
+     소리·진동·반짝임, 카드 그림 이야기(클릭·키보드), '이걸 물어볼래요', 읽어 주기, 글씨 크게, 소리 끄기(새로고침 뒤에도).
    - 주소가 localhost 면 vercel.json 의 보안 헤더(CSP 등)를 똑같이 붙여서 확인합니다.
    - /api/ask 는 NO_KEY 로 대신 답하고 api.anthropic.com 은 막습니다(요금이 드는 호출 없음). */
 let pw;
@@ -487,6 +489,171 @@ async function uxRun(browser,vp){
   }finally{await h.ctx.close()}
 }
 
+/* 재미 요소 점검 — 소리(AudioContext 를 감싸 만든 소리를 셈)·진동·반짝임, 카드 그림 이야기(클릭·Enter·스페이스),
+   '이걸 물어볼래요'(질문 칸에 넣기만, 보내지 않음), 읽어 주기(speechSynthesis 를 가짜로 바꿔 읽은 글을 셈),
+   글씨 크게(계산된 글씨 크기 1.2배), 소리 끄기·글씨 크게가 새로고침 뒤에도 남는지, 소리를 끄면 소리·진동이 전혀 없는지,
+   '동작 줄이기'면 반짝임이 없는지. tts=false: 읽어 주기가 없는 브라우저 — 🔊 버튼이 하나도 없어야 함 */
+async function funRun(browser,vp,tts){
+  const label=`${vp.width}x${vp.height} fun${tts?"":" (no speech)"}`;
+  const h=await open(browser,vp);
+  const {page,scr,primary,atStep,nav,api}=h;
+  await page.addInitScript(tts=>{
+    const fx=window.__fx={ctx:0,osc:0,noise:0,vib:0,spoken:[],cancel:0};
+    const A=window.AudioContext;
+    if(A)window.AudioContext=class extends A{
+      constructor(...a){super(...a);fx.ctx++}
+      createOscillator(){fx.osc++;return super.createOscillator()}
+      createBiquadFilter(){fx.noise++;return super.createBiquadFilter()}};
+    navigator.vibrate=()=>{fx.vib++;return true};
+    if(!tts){delete window.speechSynthesis;delete window.SpeechSynthesisUtterance}
+    else if(window.speechSynthesis){
+      speechSynthesis.speak=u=>fx.spoken.push({text:u.text,lang:u.lang,rate:u.rate});
+      const c=speechSynthesis.cancel.bind(speechSynthesis);speechSynthesis.cancel=()=>{fx.cancel++;c()};
+    }
+  },tts);
+  const fx=()=>page.evaluate(()=>window.__fx);
+  const cfg=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("maum_tarot_cfg")||"{}"));
+  const speaks=()=>page.locator(".speak").count();
+  const toDraw=async()=>{
+    await page.locator(".poster .start").click();   // 진짜 클릭 — 이때 소리가 깨어남(iOS 방식)
+    await atStep("s-color");
+    await scr(" .rows .row").nth(3).click();
+    await nav(primary());
+    await atStep("s-topic");
+    await scr(" .rows .row").nth(2).click();
+    await nav(primary());
+    await atStep("s-draw");
+    await page.waitForFunction(()=>!document.getElementById("fan").classList.contains("locked"),null,{timeout:5000});
+  };
+  const pick3=async()=>{
+    for(let k=0;k<3;k++){
+      await page.locator("#fan .card:not(.hide)").nth(2+k).dispatchEvent("click");
+      await page.waitForFunction(k=>document.querySelectorAll("#slots .slot.filled").length===k+1&&!document.querySelector("#fan .card.chosen"),k,{timeout:6000});
+    }
+  };
+  const fontOf=sel=>page.evaluate(sel=>parseFloat(getComputedStyle(document.querySelector(sel)).fontSize),sel);
+  try{
+  await page.goto(BASE.href,{waitUntil:"load"});
+  check(await page.getAttribute("#sndbtn","aria-pressed")==="true"&&(await page.textContent("#sndbtn")).includes("🔈"),"sound should default to on");
+  check(await page.getAttribute("#fsbtn","aria-pressed")==="false","big text should default to off");
+  check((await fx()).ctx===0,"AudioContext created before any tap");
+
+  // 1) 소리·진동·반짝임: 섞기 3번(잡음), 뒤집기 3번(종 2음 + 진동), 세 장째 '도미솔도' 4음 + 반짝임
+  await toDraw();
+  let f=await fx();
+  check(f.ctx===1&&f.noise>=3,"shuffle should make the riffle sound once the first tap unlocked audio: "+JSON.stringify(f));
+  await pick3();
+  check(await page.locator(".tarot-room .sparks .spark").count()===16,"no sparkle burst when the third card landed");
+  f=await fx();
+  check(f.osc===3*2+4&&f.vib===3,"bell+vibrate per flip and the 4-note arpeggio at the third card: "+JSON.stringify({osc:f.osc,vib:f.vib}));
+  await nav(page.locator("#go"));
+  await atStep("s-reading");
+  const draw=await page.evaluate(()=>state.draw.map(d=>({ko:d.ko,rev:!!d.rev})));
+  const card=i=>CONTENT.cards.find(c=>c.ko===draw[i].ko);
+
+  // 2) 카드 그림 이야기: 클릭으로 열기 · 큰 그림(역방향이면 돌림) · 이야기 · 상징 버튼 · Esc 로 닫으면 그 카드로 초점
+  const res=page.locator("#screen .result");
+  check(await res.count()===3&&(await res.evaluateAll(rs=>rs.every(r=>r.getAttribute("role")==="button"&&r.tabIndex===0))),"result cards should be role=button and focusable");
+  await res.nth(0).click();
+  await page.waitForSelector("#sheet .storybox");
+  const s0=await page.evaluate(()=>({h:document.querySelector("#sheet h3").textContent,story:document.getElementById("storytext").textContent,
+    rev:document.querySelector("#sheet .storybox img").classList.contains("rev"),src:document.querySelector("#sheet .storybox img").getAttribute("src"),
+    chips:[...document.querySelectorAll("#sheet .lookchip")].map(b=>b.textContent),shown:[...document.querySelectorAll("#sheet .lookmean")].filter(m=>!m.hidden).length,
+    ask:(document.getElementById("storyask")||{}).textContent}));
+  check(s0.h===draw[0].ko&&s0.story===card(0).story&&s0.rev===draw[0].rev&&s0.src===card(0).img&&s0.ask===card(0).ask,"card story sheet content: "+JSON.stringify(s0));
+  check(JSON.stringify(s0.chips)===JSON.stringify(card(0).look.map(l=>l[0]))&&s0.shown===0,"symbol chips should match look[] with meanings hidden: "+JSON.stringify(s0.chips));
+  await page.locator("#sheet .lookchip").nth(1).click();
+  const m1=await page.evaluate(()=>{const b=document.querySelectorAll("#sheet .lookchip")[1],m=document.getElementById(b.getAttribute("aria-controls"));return {exp:b.getAttribute("aria-expanded"),hidden:m.hidden,text:m.textContent}});
+  check(m1.exp==="true"&&!m1.hidden&&m1.text.includes(card(0).look[1][1]),"tapping a symbol should reveal its meaning: "+JSON.stringify(m1));
+  await page.locator("#sheet .lookchip").nth(1).click();
+  check(await page.evaluate(()=>document.getElementById("lm1").hidden),"tapping the symbol again should hide the meaning");
+  await page.keyboard.press("Escape");
+  check(await page.locator("#sheet").count()===0,"Escape should close the card story");
+  check(await page.evaluate(()=>document.activeElement===document.querySelectorAll("#screen .result")[0]),"focus should return to the card after closing its story");
+  // 키보드: Enter · 스페이스
+  await res.nth(1).focus();
+  await page.keyboard.press("Enter");
+  await page.waitForSelector("#sheet .storybox");
+  check(await page.textContent("#sheet h3")===draw[1].ko,"Enter on the 2nd card should open its story");
+  await page.keyboard.press("Escape");
+  await res.nth(2).focus();
+  await page.keyboard.press(" ");
+  await page.waitForSelector("#sheet .storybox");
+  check(await page.textContent("#sheet h3")===draw[2].ko,"Space on the 3rd card should open its story");
+  if(tts)check(await page.locator("#sheet .speak").count()===1,"story sheet should offer read-aloud");
+  // 3) '이걸 물어볼래요': 창을 닫고 질문 칸에 넣기만(보내지 않음, 남은 질문 수 그대로)
+  const calls=api.calls.length;
+  await page.locator("#sheet .askbox .btn",{hasText:"이걸 물어볼래요"}).click();
+  check(await page.locator("#sheet").count()===0,"이걸 물어볼래요 should close the sheet");
+  check(await page.inputValue("#q")===card(2).ask&&await page.evaluate(()=>document.activeElement.id)==="q","the question should land in the chat input (focused)");
+  await wait(600);
+  check(await page.locator("#chatlog .msg").count()===1&&api.calls.length===calls&&(await page.textContent("#chathint")).includes("남은 질문 3개"),"이걸 물어볼래요 must not send the question");
+  await page.fill("#q","");
+
+  // 4) 읽어 주기 (지원하면 리딩·답·향기 카드에 🔊, 아니면 하나도 없음)
+  if(tts){
+    check(await speaks()===2,"expected 🔊 on the reading and on the greeting bubble, got "+await speaks());
+    await page.click("#readspeak");
+    f=await fx();
+    const paras=await page.locator("#reading p").count();
+    check(f.spoken.length===paras&&f.spoken.every(u=>u.lang==="ko-KR"&&Math.abs(u.rate-.95)<.01)&&f.spoken[1].text.includes(draw[0].ko)&&!f.spoken.some(u=>u.text.includes("—")),
+      "reading read-aloud: one ko-KR utterance per paragraph at rate .95: "+JSON.stringify(f.spoken.slice(0,2)));
+    check(await page.getAttribute("#readspeak","aria-pressed")==="true","the reading button should show it is speaking");
+    await page.click("#readspeak");
+    check(await page.getAttribute("#readspeak","aria-pressed")==="false"&&(await fx()).spoken.length===paras,"pressing again should stop, not restart");
+    await h.askQ("이 카드는 무슨 뜻이에요?",3);
+    const ans=page.locator("#chatlog .msg.ai").last();
+    check(await ans.locator(".speak").count()===1&&await page.locator("#chatlog .msg.me .speak").count()===0,"answer bubbles get 🔊, the student's own bubble does not");
+    await ans.locator(".speak").click();
+    const said=(await fx()).spoken.slice(paras).map(u=>u.text).join(" ");
+    const shown=await ans.locator(".bubble").evaluate(b=>[...b.childNodes].filter(n=>!(n.classList&&n.classList.contains("src"))).map(n=>n.textContent).join(""));
+    check(said.length>10&&!said.includes("준비된 답변")&&shown.replace(/\s+/g," ").trim().startsWith(said.slice(0,20)),"bubble read-aloud should read the answer without its tag: "+said);
+  }else check(await speaks()===0&&await page.locator("#readspeak").count()===0,"🔊 buttons shown although speechSynthesis is missing");
+
+  // 5) 글씨 크게: 계산된 글씨 크기가 1.2배, 다시 누르면 원래대로, 새로고침 뒤에도 남음
+  const r0=await fontOf(".reading p"),b0=await fontOf(".bubble"),l0=await fontOf(".result h3");
+  await page.click("#fsbtn");
+  const r1=await fontOf(".reading p"),b1=await fontOf(".bubble"),l1=await fontOf(".result h3");
+  check(Math.abs(r1/r0-1.2)<.02&&Math.abs(b1/b0-1.2)<.02&&Math.abs(l1/l0-1.2)<.02,`font toggle should scale text by 1.2: ${r0}→${r1}, ${b0}→${b1}, ${l0}→${l1}`);
+  check(await page.getAttribute("#fsbtn","aria-pressed")==="true"&&(await cfg()).big===true,"big text not saved");
+
+  // 6) 향기 카드 🔊, 화면이 바뀌면 읽기를 멈춤(cancel)
+  await nav(primary());
+  await atStep("s-scent");
+  if(tts){
+    check(await page.locator(".scent .speak").count()===3,"each scent card should have 🔊");
+    const before=(await fx()).spoken.length;
+    await page.locator(".scent .speak").first().click();
+    f=await fx();
+    const name=await page.textContent(".scent h3");
+    check(f.spoken.length>before&&f.spoken[before].text.includes(name),"scent read-aloud should start with the scent name");
+    const c0=f.cancel;
+    await nav(page.locator("#screen .nav .btn:not(.primary)"));
+    await atStep("s-reading");
+    check((await fx()).cancel>c0,"render() should cancel speech");
+  }else check(await speaks()===0,"🔊 on scent cards although speechSynthesis is missing");
+
+  // 7) 소리 끄기 → 새로고침해도 꺼짐 · 소리·진동이 전혀 없음 · 글씨 크게도 남음 · '동작 줄이기'면 반짝임 없음
+  await page.click("#sndbtn");
+  check(await page.getAttribute("#sndbtn","aria-pressed")==="false"&&(await page.textContent("#sndbtn")).includes("🔇")&&(await cfg()).sound===false,"sound toggle not saved");
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.reload({waitUntil:"load"});
+  check(await page.getAttribute("#sndbtn","aria-pressed")==="false"&&(await page.textContent("#sndbtn")).includes("🔇"),"sound off should survive a reload");
+  check(await page.evaluate(()=>document.documentElement.classList.contains("big"))&&await page.getAttribute("#fsbtn","aria-pressed")==="true","big text should survive a reload");
+  await toDraw();
+  await pick3();
+  f=await fx();
+  check(f.ctx===0&&f.osc===0&&f.noise===0&&f.vib===0,"sound off: no audio and no vibration: "+JSON.stringify({ctx:f.ctx,osc:f.osc,noise:f.noise,vib:f.vib}));
+  check(await page.locator(".tarot-room .spark").count()===0,"no sparkle under prefers-reduced-motion");
+  await page.click("#fsbtn");
+  check(!(await page.evaluate(()=>document.documentElement.classList.contains("big")))&&(await cfg()).big===false,"big text should turn off again");
+  await page.click("#sndbtn");
+  check((await cfg()).sound===true&&(await fx()).ctx===1,"turning sound on should wake audio right away (tap = user gesture)");
+
+  await h.finish(label);
+  }finally{await h.ctx.close()}
+}
+
 (async()=>{
   const browser=await pw.chromium.launch();
   let failed=0;
@@ -498,12 +665,16 @@ async function uxRun(browser,vp){
       }
       try{await safetyRun(browser,vp)}
       catch(e){failed++;console.log(`FAIL ${vp.width}x${vp.height} safety: ${e.message}`)}
+      try{await funRun(browser,vp,true)}
+      catch(e){failed++;console.log(`FAIL ${vp.width}x${vp.height} fun: ${e.message}`)}
     }
+    try{await funRun(browser,VIEWPORTS[0],false)}
+    catch(e){failed++;console.log(`FAIL ${VIEWPORTS[0].width}x${VIEWPORTS[0].height} fun (no speech): ${e.message}`)}
     for(const vp of UX_VIEWPORTS){
       try{await uxRun(browser,vp)}
       catch(e){failed++;console.log(`FAIL ${vp.width}x${vp.height} ux: ${e.message}`)}
     }
   }finally{await browser.close()}
-  console.log(failed?`${failed} run(s) failed`:`all ${VIEWPORTS.length*(RUNS+1)+UX_VIEWPORTS.length} runs passed (${BASE.href})`);
+  console.log(failed?`${failed} run(s) failed`:`all ${VIEWPORTS.length*(RUNS+2)+1+UX_VIEWPORTS.length} runs passed (${BASE.href})`);
   process.exit(failed?1:0);
 })();

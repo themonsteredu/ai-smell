@@ -86,3 +86,26 @@ test("reading copy: a hook for every topic, 해요체 tails for every role, two-
     assert.ok(!/가라앉히|끌어올리|잡아 주|잡는|세우는|전환하|열어주|환기/.test(t),"effect claim or hard word: "+t);
   assert.equal(C.MOODS.find(m=>m[0]==="calm")[1],"차분 · 편안");
 });
+
+test("every card (all 42, hidden ones too) has a picture story: story, 2-3 look pairs, a short 나라면 question",()=>{
+  const S=require("../safety.js");
+  assert.equal(C.cards.length,42);
+  for(const c of C.cards){
+    assert.ok(typeof c.story==="string"&&c.story.trim().length>=40,c.ko+": story missing or too short");
+    const n=(c.story.match(/[.!?](\s|$)/g)||[]).length;
+    assert.ok(n>=2&&n<=4,c.ko+": story should be 2-3 sentences, has "+n);
+    assert.ok(Array.isArray(c.look)&&c.look.length>=2&&c.look.length<=3,c.ko+": look needs 2-3 [symbol, meaning] pairs");
+    for(const p of c.look){
+      assert.ok(Array.isArray(p)&&p.length===2&&p.every(x=>typeof x==="string"&&x.trim()),c.ko+": bad look pair "+JSON.stringify(p));
+      assert.ok(p[0].length<=12,c.ko+": symbol name too long for a chip: "+p[0]);
+    }
+    assert.equal(new Set(c.look.map(p=>p[0])).size,c.look.length,c.ko+": duplicate symbol");
+    // '이걸 물어볼래요'로 질문 칸에 들어가는 글 — 짧은 물음, 질문 칸 길이(300자) 안
+    assert.ok(typeof c.ask==="string"&&/\?$/.test(c.ask.trim())&&c.ask.length<=40,c.ko+": ask should be one short question");
+    for(const t of [c.story,c.ask,...c.look.flat()]){
+      assert.ok(!/니다[.!? ]|습니다|니다$/.test(t),c.ko+": student copy should be 해요체: "+t);
+      assert.equal(S.check(t),null,c.ko+": story text trips the safety check (the help card would open): "+t);
+      assert.ok(!/[<>"&]/.test(t),c.ko+": no markup characters in story text: "+t);
+    }
+  }
+});

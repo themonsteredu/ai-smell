@@ -151,6 +151,10 @@ test("badReading catches fortune-telling and diagnosis words but not the card na
   for(const t of ["넌 반드시 시험에 붙을 거예요.","틀림없이 좋은 일이 생겨요.","이건 운명이에요.","곧 헤어지게 될 거예요.","시험에 실패할 거예요.",
     "우울증일 수 있어요.","ADHD 같아요.","정신과에 가 보세요.","불길한 카드예요.","100% 맞아요."])assert.ok(P.badReading(t),t);
   for(const t of ["운명의 수레바퀴는 변화를 뜻해요.","운명의수레바퀴 카드예요.",good,"반드시 정답이 있는 건 아니에요.","천천히 해 보면 어떨까요?"])assert.ok(!P.badReading(t),t);
+  // 글자가 오는 중(badSoFar): 카드 이름이 '운명'까지만 온 순간에 리딩을 버리면 안 됨. 이름이 아닌 '운명'은 다음 글자에서 잡힘
+  const name="■ 현재 상황 — 운명의 수레바퀴 정방향";
+  for(let k=1;k<=name.length;k++)assert.ok(!P.badSoFar(name.slice(0,k)),"mid-stream prefix: "+name.slice(0,k));
+  assert.ok(P.badSoFar("이건 운명이에")&&P.badSoFar("넌 반드시 시험에 붙을 거예요.")&&!P.badSoFar("이건 운명"),"badSoFar still catches finished words");
 });
 
 test("parseExtras keeps only valid fields for the app's own scents and safe short questions",()=>{

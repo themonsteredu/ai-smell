@@ -23,7 +23,9 @@
   --cardw:132px;--cardh:226px;
   --serif:'BMDOHYEON','Noto Sans KR','Apple SD Gothic Neo',sans-serif;
   --sans:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --fs:1;   /* 글씨 크게(맨 위 '가' 버튼): 리딩·말풍선·안내·고르는 줄·카드 결과 글씨에 곱함 */
 }
+:root.big{--fs:1.2}
 *{box-sizing:border-box}
 body{
   margin:0;color:var(--ink);font-family:var(--sans);min-height:100vh;
@@ -55,13 +57,18 @@ button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-vis
   background-size:74px 74px}
 
 /* ── 상단 바 ───────────────────────────── */
-.topbar{position:relative;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:26px 30px 0}
+/* 왼쪽 메뉴 · 가운데 ☾ ✦ ☽ · 오른쪽 도구(글씨 크게 · 소리 · 도움말). 가운데 칸이 늘 한가운데 오게 3칸 격자 */
+.topbar{position:relative;z-index:60;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:26px 30px 0}
+.topbar .menubtn{justify-self:start}
+.tools{justify-self:end;display:flex;gap:8px}
+.fsbtn{font-family:var(--serif);font-size:18px}
 .iconbtn{
   width:44px;height:44px;border-radius:50%;border:1.5px solid var(--gold-text);background:transparent;
   color:var(--gold-text);font-size:17px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:all .25s ease
 }
 .iconbtn:hover{background:rgba(176,141,60,.14)}
-.crest{flex:1;text-align:center;color:var(--gold);font-size:15px;letter-spacing:.5em;opacity:.85}
+.iconbtn.on,.iconbtn.on:hover{background:var(--navy);border-color:var(--navy);color:var(--gold-pale)}
+.crest{text-align:center;color:var(--gold);font-size:15px;letter-spacing:.5em;opacity:.85;white-space:nowrap}
 
 .masthead{text-align:center;padding:14px 30px 0;position:relative;z-index:45}
 h1{font-family:var(--serif);font-size:clamp(28px,5vw,42px);margin:0;color:var(--navy);letter-spacing:1px;line-height:1.32}
@@ -82,7 +89,7 @@ h1{font-family:var(--serif);font-size:clamp(28px,5vw,42px);margin:0;color:var(--
 .divider em{font-style:normal;opacity:.7}
 
 h2{font-family:var(--serif);font-size:clamp(24px,4vw,34px);margin:0 0 14px;color:var(--navy);letter-spacing:.5px;text-align:center}
-.lead{color:var(--ink-soft);line-height:1.85;font-size:13.5px;text-align:center;max-width:620px;margin:0 auto}
+.lead{color:var(--ink-soft);line-height:1.85;font-size:calc(13.5px*var(--fs));text-align:center;max-width:620px;margin:0 auto}
 
 .mark{text-align:center;color:var(--gold);font-size:13px;margin-top:30px;opacity:.75}
 /* 한국어 문장은 낱말 중간에서 줄이 바뀌지 않게(긴 글자 묶음은 그래도 칸 안에서 줄바꿈) */
@@ -105,8 +112,8 @@ h2{font-family:var(--serif);font-size:clamp(24px,4vw,34px);margin:0 0 14px;color
 .orb{width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:15px}
 .orb i{width:11px;height:11px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px rgba(176,141,60,.18)}
 .rowtext{flex:1;min-width:0}
-.rowtext strong{display:block;font-family:var(--serif);font-size:16.5px;color:var(--navy)}
-.rowtext .desc{display:block;color:var(--ink-soft);font-size:12.5px;line-height:1.5;margin-top:4px}
+.rowtext strong{display:block;font-family:var(--serif);font-size:calc(16.5px*var(--fs));color:var(--navy)}
+.rowtext .desc{display:block;color:var(--ink-soft);font-size:calc(12.5px*var(--fs));line-height:1.5;margin-top:4px}
 .chev{color:var(--gold);font-size:20px;line-height:1;opacity:.8}
 
 /* ── 버튼 ──────────────────────────────── */
@@ -234,14 +241,14 @@ body.on-cover .topbar .crest{color:#8a6f36}
 .results{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
 .result{border:1px solid var(--line);padding:16px 18px;background:rgba(255,253,246,.62);display:flex;align-items:center;gap:18px;transition:all .3s ease}
 .result:hover{border-color:var(--gold);background:#fffdf6}
-.result .lbl{color:var(--ink-soft);font-size:12px;display:block;margin-bottom:10px}
+.result .lbl{color:var(--ink-soft);font-size:calc(12px*var(--fs));display:block;margin-bottom:10px}
 .result img{width:76px;height:130px;object-fit:cover;flex:0 0 76px;box-shadow:0 3px 12px rgba(60,45,20,.28)}
 .result.rev img{transform:rotate(180deg)}
-.result h3{font-family:var(--serif);font-size:22px;margin:0 0 4px;color:var(--navy)}
-.result p{color:var(--ink-soft);font-size:13px;margin:0}
+.result h3{font-family:var(--serif);font-size:calc(22px*var(--fs));margin:0 0 4px;color:var(--navy)}
+.result p{color:var(--ink-soft);font-size:calc(13px*var(--fs));margin:0}
 .reading{border:1px solid var(--line);padding:26px;background:rgba(255,253,246,.7);line-height:1.95;position:relative}
 .reading:before{content:"";position:absolute;inset:5px;border:1px solid var(--line-soft);pointer-events:none}
-.reading p{margin:0 0 18px;color:var(--ink);font-size:14px}
+.reading p{margin:0 0 18px;color:var(--ink);font-size:calc(14px*var(--fs))}
 .reading p:last-child{margin-bottom:0}
 .reading b{color:var(--navy);font-weight:700;font-family:var(--serif)}
 
@@ -252,7 +259,7 @@ body.on-cover .topbar .crest{color:#8a6f36}
 .scent:hover{border-color:var(--gold);background:#fffdf6;box-shadow:0 8px 22px rgba(60,45,20,.12)}
 .scent small{color:var(--gold-text);display:block;margin:14px 0 6px;font-weight:700;letter-spacing:.22em;font-size:12px}
 .scent h3{font-family:var(--serif);font-size:26px;margin:6px 0 12px;color:var(--navy)}
-.scent p{color:var(--ink-soft);font-size:13px;line-height:1.65;margin:0}
+.scent p{color:var(--ink-soft);font-size:calc(13px*var(--fs));line-height:1.65;margin:0}
 
 .notice{color:var(--ink-soft);font-size:12.5px;margin-top:20px;line-height:1.75;padding:14px 18px;border-left:2px solid var(--gold);background:rgba(176,141,60,.07)}
 .notice.top{margin:0 0 16px}
@@ -275,7 +282,7 @@ body.on-cover .topbar .crest{color:#8a6f36}
   .navgap{display:none}
   .corners{background-size:56px 56px}
   .result img{width:64px;height:110px;flex:0 0 64px}
-  .result h3{font-size:19px}
+  .result h3{font-size:calc(19px*var(--fs))}
 }
 
 /* ── 안쪽 액자 (목업의 STEP 패널) ────────── */
@@ -288,7 +295,7 @@ body.on-cover .topbar .crest{color:#8a6f36}
 .sheet{position:fixed;inset:0;z-index:200;background:rgba(20,25,40,.55);display:grid;place-items:center;padding:20px;animation:fadeIn .25s ease both}
 .sheetbox{max-width:440px;width:100%;background:var(--tile);border:1.5px solid var(--gold);padding:30px 26px;position:relative;max-height:88vh;overflow:auto;overflow-x:hidden}
 /* 창 안 버튼은 큰 화면에서도 작게 — 440px 창 밖으로 '저장'이 밀려나지 않게 */
-.sheetbox .lead{font-size:15px;line-height:1.7}
+.sheetbox .lead{font-size:calc(15px*var(--fs));line-height:1.7}
 .sheetbox .nav{gap:8px}
 .sheetbox .nav .btn{min-width:0;padding:13px 12px;font-size:15px;letter-spacing:.04em}
 .sheetbox .nav .mid{min-width:0;gap:8px}
@@ -342,7 +349,7 @@ h2{letter-spacing:0}
 .msg.ai{align-self:flex-start}
 .ava{width:30px;height:30px;flex:0 0 30px;border-radius:50%;border:1px solid var(--gold);
   display:grid;place-items:center;color:var(--gold);font-size:11px;background:rgba(255,253,246,.75);margin-top:2px}
-.bubble{padding:13px 16px;font-size:13.5px;line-height:1.85;white-space:pre-wrap;
+.bubble{padding:13px 16px;font-size:calc(13.5px*var(--fs));line-height:1.85;white-space:pre-wrap;
   border:1px solid var(--line);background:rgba(255,253,246,.8);color:var(--ink)}
 .msg.me .bubble{background:var(--navy);border-color:var(--navy);color:var(--gold-pale)}
 .typing i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--gold);
@@ -373,7 +380,8 @@ h2{letter-spacing:0}
 /* ── ☰ 메뉴 버튼: 아이콘만이면 못 찾으니 라벨을 붙임 ── */
 .menubtn{width:auto;border-radius:22px;padding:0 16px;gap:7px;font-size:14px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
 .menubtn .mlabel{font-family:var(--sans);font-size:14px}
-@media(max-width:420px){.menubtn .mlabel{display:none}.menubtn{width:44px;padding:0}}
+@media(max-width:420px){.menubtn .mlabel{display:none}.menubtn{width:44px;padding:0}
+  .topbar{padding-left:20px;padding-right:20px;gap:4px}.tools{gap:5px}.crest{letter-spacing:.25em;font-size:13px}}
 
 /* ── 태블릿·데스크톱(701px 이상): 큰 글씨 ──
    701~899px(세워 든 태블릿)은 축소하지 않고 보통처럼 위아래로 넘겨 봐요.
@@ -400,20 +408,20 @@ h2{letter-spacing:0}
 
   /* ── 글씨 크게 ── */
   h2{font-size:clamp(30px,2.5vw,42px);margin-bottom:16px}
-  .lead{font-size:17.5px;line-height:1.8;max-width:none}
+  .lead{font-size:calc(17.5px*var(--fs));line-height:1.8;max-width:none}
   .divider span{font-size:13px}
-  .rowtext strong{font-size:20px}
-  .rowtext .desc{font-size:15px;margin-top:5px}
+  .rowtext strong{font-size:calc(20px*var(--fs))}
+  .rowtext .desc{font-size:calc(15px*var(--fs));margin-top:5px}
   .row{padding:17px 22px;gap:16px}
   .orb{width:26px;height:26px;flex:0 0 26px;font-size:17px}
   .btn{font-size:16px;padding:16px 30px}
   .nav .btn{min-width:150px}
   .plaque{font-size:21px;padding:13px;margin-bottom:20px}
-  .result h3{font-size:28px}
-  .result p{font-size:16px}
-  .result .lbl{font-size:14px;margin-bottom:8px}
+  .result h3{font-size:calc(28px*var(--fs))}
+  .result p{font-size:calc(16px*var(--fs))}
+  .result .lbl{font-size:calc(14px*var(--fs));margin-bottom:8px}
   .reading{padding:30px}
-  .reading p{font-size:17.5px;line-height:1.95;margin-bottom:16px}
+  .reading p{font-size:calc(17.5px*var(--fs));line-height:1.95;margin-bottom:16px}
   .notice{font-size:15px;padding:16px 20px}
   .roomhead{top:24px}
   .status{font-size:18px;letter-spacing:.14em}
@@ -421,14 +429,14 @@ h2{letter-spacing:0}
   .slot strong{font-size:21px}
   .slot .lbl{font-size:12.5px}
   .slot .ori{font-size:15px}
-  .bubble{font-size:16px;line-height:1.8;padding:14px 18px}
+  .bubble{font-size:calc(16px*var(--fs));line-height:1.8;padding:14px 18px}
   .ava{width:34px;height:34px;flex:0 0 34px;font-size:13px}
   textarea{font-size:16px}
   .chatbar textarea{min-height:56px}
   .send{flex:0 0 60px;height:56px;font-size:18px}
   .chathint{font-size:14px}
   .scent h3{font-size:30px}
-  .scent p{font-size:15px;line-height:1.7}
+  .scent p{font-size:calc(15px*var(--fs));line-height:1.7}
   .scent small{font-size:12.5px}
   .scent .from{font-size:14px}
   .scent{padding:30px 22px}
@@ -495,12 +503,12 @@ h2{letter-spacing:0}
 /* 아주 넓은 모니터: 더 크게 */
 @media(min-width:1500px){
   .shell{width:min(1500px,94vw)}
-  .lead{font-size:19px}
-  .rowtext strong{font-size:22px}
-  .rowtext .desc{font-size:16px}
-  .reading p{font-size:19px}
+  .lead{font-size:calc(19px*var(--fs))}
+  .rowtext strong{font-size:calc(22px*var(--fs))}
+  .rowtext .desc{font-size:calc(16px*var(--fs))}
+  .reading p{font-size:calc(19px*var(--fs))}
   .btn{font-size:17px}
-  .result h3{font-size:31px}
+  .result h3{font-size:calc(31px*var(--fs))}
   .result img{width:120px;height:206px;flex:0 0 120px}
 }
 
@@ -563,6 +571,52 @@ body.flagged .topbar .crest{color:#a4503f;opacity:1;text-shadow:0 0 8px rgba(164
   .helpcard p.show{font-size:18px}
   .lines span{font-size:16px}
 }
+
+/* ── 재미 요소: 반짝임 · 읽어 주기 · 카드 그림 이야기 ── */
+/* 세 장째가 놓이면 탁자 가운데에서 금빛 ✦ 이 퍼졌다 사라짐(sparkle). 움직임 줄이기 설정이면 아예 만들지 않음 */
+.sparks{position:absolute;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+.spark{position:absolute;left:50%;top:46%;color:var(--gold-pale);font-size:var(--ss,16px);line-height:1;opacity:0;
+  text-shadow:0 0 10px rgba(255,214,130,.95);transform:translate(-50%,-50%) scale(.2);animation:spark 1s ease-out var(--sd,0s) forwards}
+@keyframes spark{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}
+  25%{opacity:1}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(var(--rot))}}
+/* 🔊 읽어 주기 — 읽는 동안 .on(남색). 리딩 위(.readbar), 답 말풍선 옆, 향기 카드 오른쪽 위, 그림 이야기 창 */
+.speak{border:1px solid var(--gold);background:rgba(255,253,246,.85);color:var(--navy);border-radius:18px;padding:7px 14px;
+  font-size:13.5px;line-height:1.3;transition:all .2s ease}
+.speak:hover{background:#fffdf6}
+.speak.on,.speak.on:hover{background:var(--navy);border-color:var(--navy);color:var(--gold-pale)}
+.speak.icon{width:36px;height:36px;flex:0 0 36px;padding:0;display:inline-grid;place-items:center;font-size:15px}
+.msg .speak.icon{align-self:flex-end}
+.scent .speak.icon{position:absolute;top:8px;right:8px}
+.readbar{display:flex;align-items:center;gap:10px}
+.readbar>*{margin:0 0 8px}
+.readbar .readsrc{margin-left:auto}
+/* 리딩 결과 카드는 눌러서 그림 이야기를 여는 버튼 */
+.result[role=button]{cursor:pointer}
+.result:focus-visible{outline:2px solid var(--gold-text);outline-offset:3px}
+.result .tap{display:block;margin-top:8px;font-size:calc(12.5px*var(--fs));font-weight:700;color:var(--gold-text);letter-spacing:.04em}
+.sheetbox.story{max-width:680px}
+.storysub{margin:0;text-align:center;color:var(--ink-soft);font-size:13.5px}
+.storybox{display:grid;grid-template-columns:200px 1fr;gap:22px;align-items:start;margin-top:16px}
+.storybox img{width:100%;height:auto;display:block;background:#e9dcbb;box-shadow:0 6px 18px rgba(60,45,20,.3)}
+.storybox img.rev{transform:rotate(180deg)}
+.story-text{margin:0;font-size:calc(15px*var(--fs));line-height:1.8;color:var(--ink);word-break:keep-all}
+.storybox .speak{margin-top:10px}
+.looklbl{margin:16px 0 8px;font-size:12.5px;font-weight:700;letter-spacing:.1em;color:var(--gold-text)}
+.looks{display:flex;flex-wrap:wrap;gap:8px}
+.chip.lookchip[aria-expanded=true],.chip.lookchip[aria-expanded=true]:hover{background:var(--navy);border-color:var(--navy);color:var(--gold-pale)}
+.lookmean{margin:8px 0 0;padding:8px 12px;border-left:2px solid var(--gold);background:rgba(176,141,60,.08);
+  font-size:calc(14px*var(--fs));line-height:1.7;color:var(--ink);word-break:keep-all}
+.lookmean b{color:var(--navy);margin-right:4px}
+.askbox{margin-top:18px;padding:14px 16px;border:1px solid var(--line);background:rgba(255,253,246,.8)}
+.askbox b{display:block;font-family:var(--serif);font-weight:400;color:var(--navy);font-size:17px;margin-bottom:4px}
+.askbox p{margin:0;font-size:calc(15px*var(--fs));line-height:1.7;color:var(--ink);word-break:keep-all}
+.askbox .btn{margin-top:10px;padding:10px 16px;font-size:14px;letter-spacing:.04em}
+.askbox .askhint{margin-top:6px;font-size:12.5px;color:var(--ink-soft)}
+@media(max-width:600px){
+  .storybox{grid-template-columns:1fr;gap:14px}
+  .storybox img{width:min(160px,45vw);margin:0 auto}
+}
 </style>
 </head>
 <body>
@@ -572,7 +626,11 @@ body.flagged .topbar .crest{color:#a4503f;opacity:1;text-shadow:0 0 8px rgba(164
     <div class="topbar">
       <button class="iconbtn menubtn" onclick="menu()" aria-label="메뉴 · 설정 · 향기 목록">☰<span class="mlabel">메뉴</span></button>
       <div class="crest">☾ ✦ ☽</div>
-      <button class="iconbtn" onclick="help()" aria-label="도움말">?</button>
+      <div class="tools">
+        <button class="iconbtn fsbtn" id="fsbtn" type="button" onclick="toggleBig()" aria-pressed="false" aria-label="글씨 크게" title="글씨 크게">가</button>
+        <button class="iconbtn" id="sndbtn" type="button" onclick="toggleSound()" aria-pressed="true" aria-label="소리" title="소리 켜기·끄기">🔈</button>
+        <button class="iconbtn" type="button" onclick="help()" aria-label="도움말">?</button>
+      </div>
     </div>
     <div class="masthead" id="masthead">
       <h1>마음의<br>향기 타로</h1>
@@ -752,7 +810,8 @@ function normModel(m){m=String(m||"");return m.includes("haiku")||!m.includes("s
 /* 모델 버튼의 '학생 1명 약 ○원' — 1백만 토큰당 달러(입력, 출력) × 토큰 어림(Prompts.studentTokens) × 환율, 5원 단위 */
 const PRICE={[HAIKU]:[1,5],[SONNET]:[2,10]},WON_PER_USD=1400;
 function won(m){const t=Prompts.studentTokens(),[i,o]=PRICE[m];return Math.max(5,Math.round((t.input*i+t.output*o)/1e6*WON_PER_USD/5)*5)}
-let memCfg={apiKey:"",model:HAIKU,aiOff:false};   // aiOff: 설정의 'AI 기능 끄기'
+/* aiOff: 설정의 'AI 기능 끄기' · sound: 맨 위 🔈 소리·진동(기본 켬) · big: 맨 위 '가' 글씨 크게(기본 끔) */
+let memCfg={apiKey:"",model:HAIKU,aiOff:false,sound:true,big:false};
 
 function loadCfg(){
   try{const r=localStorage.getItem(CFG_KEY);if(r)memCfg={...memCfg,...JSON.parse(r)}}catch(e){}
@@ -772,13 +831,13 @@ function maskKey(k){return k.length>14?k.slice(0,7)+"…"+k.slice(-4):"…"}
    바로 저장되는 칸(AI 기능 끄기)은 data-instant 를 붙여 dirty 로 치지 않아요. */
 const appEl=document.querySelector(".app");
 let sheetOpener=null;
-function sheet(inner){
+function sheet(inner,cls){   // cls: 창 모양을 바꿀 때(예: 그림 이야기 'story' — 조금 넓은 창)
   const old=document.getElementById("sheet");
   if(old)old.remove();else sheetOpener=document.activeElement;   // 창에서 창으로 넘어가면 처음 연 버튼을 기억
   const d=document.createElement("div");
   d.className="sheet";d.id="sheet";
   d.onclick=e=>{if(e.target===d&&!d.dataset.dirty)closeSheet()};
-  d.innerHTML=`<div class="sheetbox" role="dialog" aria-modal="true" tabindex="-1">${inner}</div>`;
+  d.innerHTML=`<div class="sheetbox${cls?" "+cls:""}" role="dialog" aria-modal="true" tabindex="-1">${inner}</div>`;
   const box=d.firstElementChild,h=box.querySelector("h3");
   if(h){h.id="sheettitle";box.setAttribute("aria-labelledby","sheettitle")}
   const dirty=e=>{if(!e.target.closest("[data-instant]"))markDirty()};
@@ -796,6 +855,7 @@ function closeSheet(force){
   const d=document.getElementById("sheet");
   if(!d)return true;
   if(force!==true&&d.dataset.dirty&&!confirm("저장하지 않은 내용이 있어요. 저장하지 않고 닫을까요?"))return false;
+  if(ttsBtn&&d.contains(ttsBtn))stopSpeak();   // 창 안에서 읽어 주던 글(그림 이야기)은 창을 닫으면 멈춤
   d.remove();appEl.inert=false;
   const o=sheetOpener;sheetOpener=null;
   if(o&&o.isConnected&&o!==document.body&&!state.flag)o.focus({preventScroll:true});
@@ -832,7 +892,7 @@ function help(){
       <li><b>감정 색</b> — 지금 내 마음과 가장 비슷한 색을 하나 골라요.</li>
       <li><b>주제</b> — 오늘 이야기해 보고 싶은 주제를 골라요. 한 줄 메모는 써도 되고 비워 둬도 돼요.</li>
       <li><b>카드</b> — 섞인 카드 가운데 마음이 가는 세 장을 골라요.</li>
-      <li><b>리딩</b> — 세 카드를 이어서 읽고, 궁금한 점은 '더 물어보기'에 적어요.</li>
+      <li><b>리딩</b> — 세 카드를 이어서 읽고, 궁금한 점은 '더 물어보기'에 적어요. 카드를 누르면 그림 속 이야기도 볼 수 있어요.</li>
       <li><b>향기</b> — 카드와 어울리는 향기 세 가지를 보고, 이름을 가린 채 맡아 본 뒤 직접 골라요.</li>
     </ol>
     <div class="notice teach-help">
@@ -844,6 +904,13 @@ function help(){
       · 다시 뽑기를 해도 남은 질문 수는 다시 채워지지 않아요(같은 학생으로 봐요). 리딩·대화가 있을 때 다시 뽑기·처음부터를 누르면 지우기 전에 한 번 더 물어봐요.<br>
       · 휴대폰처럼 좁은 화면에서는 카드를 15장만 펼쳐요(카드가 너무 얇아지지 않게). 그래도 숨기지 않은 모든 카드 가운데에서 무작위로 골라요.<br>
       · <b>다음 학생으로 넘길 때</b>: 향기 화면의 <b>처음부터</b>나 ☰ 메뉴 → <b>처음 화면</b>을 눌러 주세요. 앞 학생의 색·주제·메모·카드·대화가 모두 지워져요. 새로고침해도 앞 학생 기록은 돌아오지 않아요.
+    </div>
+    <div class="notice teach-help">
+      <b>선생님께 — 소리 · 글씨 · 그림 이야기 · 읽어 주기</b><br>
+      · 맨 위 <b>🔈</b> 버튼으로 소리와 진동을 끄고 켜요(🔇 = 꺼짐). 카드를 섞을 때·뒤집을 때·세 장이 모두 놓일 때 작은 소리가 나고, 세 장째에는 탁자에 금빛 ✦ 이 반짝여요. 기기마다 따로 저장돼요. 기기가 무음 모드이면 소리가 안 날 수 있어요. '동작 줄이기'를 켠 기기에서는 반짝임이 나오지 않아요.<br>
+      · 맨 위 <b>가</b> 버튼을 누르면 리딩·답·안내 글씨가 커져요(다시 누르면 원래대로, 기기마다 저장).<br>
+      · 리딩 결과의 카드를 누르면(키보드는 Enter) <b>그림 이야기</b> 창이 열려요: 그림 속 이야기, 눌러 보면 뜻이 나오는 그림 속 상징, '나라면?' 질문. <b>이걸 물어볼래요</b>는 질문 칸에 넣기만 하고 보내지는 않아요(남은 AI 질문이 있을 때만 보여요). 글은 content.js 의 카드마다 story·look·ask 에서 고칠 수 있어요.<br>
+      · <b>🔊 읽어 주기</b>는 기기에 들어 있는 한국어 목소리로 리딩·답·향기 카드·그림 이야기를 읽어요. 읽어 주기가 안 되는 브라우저에서는 버튼이 보이지 않아요. 기기 안의 목소리를 먼저 쓰지만, 일부 컴퓨터의 크롬은 '구글' 목소리로 읽으면서 읽을 글을 구글로 보낼 수 있어요(학생이 쓴 메모·질문은 읽지 않아요). 화면이 바뀌면 읽기를 멈춰요.
     </div>
     <div class="notice teach-help">
       <b>선생님께 — 블라인드 시향</b><br>
@@ -1006,6 +1073,7 @@ function render(){
   if(stepChanged&&lastRenderedStep===2){cancelTimers();picking=false}
   lastRenderedStep=state.step;
   const scrollUp=()=>{if(stepChanged)window.scrollTo({top:0,behavior:"smooth"})};
+  stopSpeak();   // 화면이 바뀌면 읽어 주기를 멈춤
   crestCue();
   const onCover=state.step===-1&&!state.flag;
   document.body.classList.toggle("on-cover",onCover);
@@ -1139,11 +1207,11 @@ function shuffle(){
   document.getElementById("status").innerHTML=`카드를 섞는 중<span class="dots"></span>`;
   syncDraw();
   stack();
-  later(()=>riffle(1),320);
+  later(()=>{riffle(1);sfx("riffle")},320);
   later(stack,660);
-  later(()=>riffle(-1),980);
+  later(()=>{riffle(-1);sfx("riffle")},980);
   later(stack,1320);
-  later(()=>riffle(1),1600);
+  later(()=>{riffle(1);sfx("riffle")},1600);
   later(()=>{locked=false;layout();drawReady()},2000);
 }
 function reshuffle(){
@@ -1199,7 +1267,7 @@ function pick(i){
   Promise.race([im.decode?im.decode().catch(()=>{}):null,new Promise(r=>setTimeout(r,1500))]).then(()=>{
     if(g!==gen||state.step!==2)return;   // 그사이 처음부터 등으로 바뀌었으면 버림
     const d=Math.max(0,480-(Date.now()-t0));
-    later(()=>el.classList.add("picked"),d);
+    later(()=>{el.classList.add("picked");sfx("bell");buzz()},d);   // 뒤집는 순간 작은 종소리 + 짧은 진동
     later(()=>{
       st.innerHTML=`<b>${c.ko}</b> · ${ori}`;
       el.setAttribute("aria-label",`${roles[slotIndex]}: ${c.ko}, ${ori}`);
@@ -1219,9 +1287,10 @@ function pick(i){
 }
 /* 뽑은 뒤: 키보드로 고른 경우 옆 카드(세 장이면 리딩 보기)로 초점을 옮기고,
    세 장째면 리딩 보기 버튼이 화면에 보이게 하고, 미뤄 둔 화면 맞춤(fit)을 다시 함.
-   세 장째가 놓이면 리딩 글·향기를 만들고 AI 리딩을 바로 시작(학생이 '리딩 보기'를 누르는 동안 미리 씀) */
+   세 장째가 놓이면 리딩 글·향기를 만들고 AI 리딩을 바로 시작(학생이 '리딩 보기'를 누르는 동안 미리 씀).
+   그때 한 번만 '도미솔도' 소리와 금빛 반짝임 */
 function afterPick(el){
-  if(state.draw.length===3&&!state.readHtml){makeReading();startAiReading()}
+  if(state.draw.length===3&&!state.readHtml){makeReading();startAiReading();sfx("arp");sparkle()}
   const go=document.getElementById("go"),cards=els(),k=cards.indexOf(el),open=x=>!x.classList.contains("hide");
   if(document.activeElement===el){
     const t=state.draw.length>=3?go:(cards.slice(k+1).find(open)||cards.slice(0,k).reverse().find(open));
@@ -1246,10 +1315,13 @@ const plain=html=>html.replace(/<br>/g,"\n").replace(/<[^>]+>/g,"").replace(/[ \
 
 function readingScreen(){
   screenEl.innerHTML=divider("STEP 04")+`<h2 class="plaque">리딩 결과</h2>`
-  +`<div class="results">${state.draw.map((d,i)=>`<article class="result ${d.rev?"rev":""}">${img(d)}
-      <div><span class="lbl">${i+1}. ${roles[i]}</span><h3>${d.ko}</h3><p>${d.rev?"역방향":"정방향"}</p></div></article>`).join("")}</div>`
+  // 결과 카드는 누르면(Enter·스페이스도) 그림 이야기 창(cardInfo)
+  +`<div class="results">${state.draw.map((d,i)=>{const ori=d.rev?"역방향":"정방향";
+      return `<div class="result ${d.rev?"rev":""}" role="button" tabindex="0" aria-label="${i+1}. ${roles[i]} ${d.ko} ${ori} · 그림 이야기 보기"
+        onclick="cardInfo(${i})" onkeydown="cardKey(event,${i})">${img(d)}
+      <div><span class="lbl">${i+1}. ${roles[i]}</span><h3>${d.ko}</h3><p>${ori}</p><span class="tap" aria-hidden="true">그림 이야기 보기 ›</span></div></div>`}).join("")}</div>`
   +`<div class="notice top">타로 카드는 미래를 맞히는 게 아니에요. 카드 그림을 보며 내 마음을 떠올려 보는 활동이에요.</div>
-    <p class="readsrc" id="readsrc"></p>
+    <div class="readbar">${speakBtn("readParts()","",'id="readspeak"')}<p class="readsrc" id="readsrc"></p></div>
     <div class="reading" id="reading"></div>`
   +askBlock()
   +`<div class="nav"><span class="navgap"></span><div class="mid"><button class="btn" onclick="redraw()">다시 뽑기</button>
@@ -1273,7 +1345,10 @@ function paintReading(){
   if(!box)return;
   const a=aiRead&&aiRead.g===gen?aiRead:null;
   if(!a||a.st==="fail"){
-    if(box.dataset.src!=="local"){box.innerHTML=state.readHtml;box.dataset.src="local"}
+    if(box.dataset.src!=="local"){
+      if(ttsBtn&&ttsBtn.id==="readspeak")stopSpeak();   // AI 글을 읽어 주던 중 준비된 풀이로 바뀌면 멈춤
+      box.innerHTML=state.readHtml;box.dataset.src="local";
+    }
     tag.textContent=a?"준비된 풀이":"";   // AI를 쓰지 않는 기기에서는 예전처럼 표시 없음
     return;
   }
@@ -1301,7 +1376,7 @@ function scentFrom(x){
 function scentCard(x,i){
   const ai=(extras&&extras.g===gen&&extras.scents[x.name])||{};
   const why=ai.reason?`<p class="why"><b class="aitag">AI</b> ${esc(ai.reason)}</p>`:`<p>${esc(x.desc||MOOD_DESC[x.mood]||"카드와 어울리는 향기")}</p>`;
-  return `<div class="scent"><small>SCENT 0${i+1}</small><h3>${esc(x.name)}</h3><span class="from">${esc(scentFrom(x))}</span>${why}
+  return `<div class="scent">${speakBtn("scentParts(this)",x.name+" 향기 읽어 주기")}<small>SCENT 0${i+1}</small><h3>${esc(x.name)}</h3><span class="from">${esc(scentFrom(x))}</span>${why}
     <p class="sq">${esc(ai.ask||SMELL_QUESTIONS[i%SMELL_QUESTIONS.length])}</p></div>`;
 }
 function scentScreen(){
@@ -1417,7 +1492,7 @@ async function startAiReading(){
     t=>{
       if(g!==gen)return false;
       if(Safety.hasMarker(t)){help=true;return false}
-      if(Prompts.badReading(t))return false;   // 단정·진단하는 말이 보이면 더 보여 주지 않고 바로 준비된 풀이로
+      if(Prompts.badSoFar(t))return false;   // 단정·진단하는 말이 보이면 더 보여 주지 않고 바로 준비된 풀이로
       a.text=t;paintReading();
     },aiCtl());
   if(g!==gen)return;
@@ -1504,7 +1579,7 @@ function bubble(who,text,typing,src){
   el.innerHTML=(who==="ai"?'<div class="ava">✦</div>':"")+'<div class="bubble"></div>';
   const b=el.querySelector(".bubble");
   if(typing)b.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
-  else fillBubble(b,text,src);
+  else{fillBubble(b,text,src);if(who==="ai")addSpeak(el)}
   log.appendChild(el);
   return el;
 }
@@ -1624,6 +1699,7 @@ async function ask(preset){
   if(p){
     p.classList.remove("pending");
     fillBubble(p.querySelector(".bubble"),answer,src);
+    addSpeak(p);
     p.parentNode.removeAttribute("aria-busy");
     p.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
@@ -1693,6 +1769,169 @@ function endFlag(reset){
   render();
 }
 
+/* ══════════════ 재미 요소 ══════════════
+   소리(소리 파일 없이 WebAudio 로 그 자리에서 만듦) · 진동 · 반짝임 · 글씨 크게 · 읽어 주기 · 카드 그림 이야기.
+   소리·진동(cfg.sound, 기본 켬)과 글씨 크게(cfg.big, 기본 끔)는 맨 위 버튼으로, 이 기기에만 저장 */
+const soundOn=()=>loadCfg().sound!==false;
+let actx=null;
+/* iOS 는 손가락으로 누르는 그 순간에만 소리를 켤 수 있어서, 누르거나 키를 칠 때 AudioContext 를 만들어 깨워 둠(들리지 않는 아주 짧은 소리 한 번) */
+function unlockAudio(){
+  if(!soundOn()||(actx&&actx.state==="running"))return;
+  const A=window.AudioContext||window.webkitAudioContext;
+  if(!A)return;
+  try{
+    if(!actx)actx=new A();
+    if(actx.state!=="running")actx.resume().catch(()=>{});
+    const s=actx.createBufferSource();s.buffer=actx.createBuffer(1,1,22050);s.connect(actx.destination);s.start(0);
+  }catch(e){}
+}
+["pointerdown","touchend","keydown"].forEach(n=>addEventListener(n,unlockAudio,true));
+function tone(out,f,t,dur,peak,type){
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.type=type||"sine";o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,t);
+  g.gain.exponentialRampToValueAtTime(peak,t+.015);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(out);o.start(t);o.stop(t+dur+.05);
+}
+/* riffle: 카드 섞기(종이가 촤르르 — 짧은 잡음 여러 번) · bell: 카드 뒤집기(작은 종) · arp: 세 장 완성(도미솔도). 모두 작은 소리 */
+function sfx(name){
+  if(!actx||!soundOn())return;
+  if(actx.state!=="running"){actx.resume().catch(()=>{});return}   // 깨어나기 전 소리는 버림(나중에 한꺼번에 울리지 않게)
+  try{
+    const t=actx.currentTime+.01,out=actx.createGain();
+    out.gain.value=.5;out.connect(actx.destination);
+    if(name==="riffle"){
+      const n=Math.floor(actx.sampleRate*.03),buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);
+      for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+      const bp=actx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=2800;bp.Q.value=.8;bp.connect(out);
+      for(let k=0;k<8;k++){const s=actx.createBufferSource(),g=actx.createGain();s.buffer=buf;g.gain.value=.22*(1-k/10);s.connect(g);g.connect(bp);s.start(t+k*.03)}
+    }else if(name==="bell"){tone(out,880,t,1.3,.09);tone(out,1320,t,.8,.04)}
+    else if(name==="arp")[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(out,f,t+i*.11,.8,.07,"triangle"));
+  }catch(e){}
+}
+/* 카드를 뒤집을 때 짧은 진동(되는 기기만). 화면을 한 번도 누르지 않은 창에서는 브라우저가 막으므로 부르지 않음 */
+function buzz(){
+  if(!soundOn()||!navigator.vibrate||(navigator.userActivation&&!navigator.userActivation.hasBeenActive))return;
+  try{navigator.vibrate(25)}catch(e){}
+}
+/* 세 장째가 놓이면 탁자 가운데에서 금빛 ✦ 이 퍼짐(1초쯤 뒤 사라짐). '동작 줄이기' 설정이면 건너뜀 */
+function sparkle(){
+  const room=document.querySelector(".tarot-room");
+  if(!room||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const box=document.createElement("div");
+  box.className="sparks";box.setAttribute("aria-hidden","true");
+  for(let i=0;i<16;i++){
+    const s=document.createElement("span"),a=i/16*Math.PI*2+Math.random()*.35,r=70+Math.random()*100;
+    s.className="spark";s.textContent="✦";
+    [["--dx",(Math.cos(a)*r).toFixed(1)+"px"],["--dy",(Math.sin(a)*r*.75).toFixed(1)+"px"],["--sd",(Math.random()*.18).toFixed(2)+"s"],
+     ["--ss",(10+Math.random()*14).toFixed(0)+"px"],["--rot",(Math.random()*180-90).toFixed(0)+"deg"]].forEach(([k,v])=>s.style.setProperty(k,v));
+    box.appendChild(s);
+  }
+  room.appendChild(box);
+  setTimeout(()=>box.remove(),1400);
+}
+
+/* 맨 위 버튼 모양을 저장된 값에 맞춤(🔈 켬 / 🔇 끔, '가' 눌림 = 글씨 크게) */
+function paintTools(){
+  const c=loadCfg(),s=c.sound!==false,b=!!c.big,sb=document.getElementById("sndbtn"),fb=document.getElementById("fsbtn");
+  document.documentElement.classList.toggle("big",b);
+  sb.textContent=s?"🔈":"🔇";sb.setAttribute("aria-pressed",s);
+  fb.classList.toggle("on",b);fb.setAttribute("aria-pressed",b);
+}
+function toggleSound(){
+  saveCfg({sound:!soundOn()});paintTools();
+  if(!soundOn())return;
+  unlockAudio();   // 켜면 바로 작은 종소리로 크기를 들려줌
+  if(actx)actx.resume().then(()=>sfx("bell")).catch(()=>{});
+}
+function toggleBig(){saveCfg({big:!loadCfg().big});paintTools();refit()}
+
+/* ── 읽어 주기 ── 기기에 들어 있는 한국어 목소리(speechSynthesis)로. 안 되는 브라우저에서는 🔊 버튼을 아예 그리지 않음.
+   화면이 바뀌면(render) 멈추고, 읽는 중에 같은 버튼을 다시 누르면 멈춤. 기기 안의 목소리(localService)를 먼저 고름 */
+const TTS=!!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
+let ttsBtn=null;
+if(TTS)try{speechSynthesis.getVoices()}catch(e){}   // 목소리 목록을 미리 불러 둠(크롬은 처음에 빈 목록을 줌)
+/* 🔊 버튼. src: 누를 때 읽을 글 조각 배열을 돌려주는 식(문자열) · label: 있으면 작은 동그라미 버튼과 화면읽기용 이름, 없으면 '🔊 읽어 주기' */
+const speakBtn=(src,label,extra="")=>TTS?`<button type="button" class="speak${label?" icon":""}" aria-pressed="false"${label?` aria-label="${esc(label)}"`:""}${extra?" "+extra:""} onclick="speak(${src},this)">${label?"🔊":"🔊 읽어 주기"}</button>`:"";
+function ttsOff(){if(ttsBtn){ttsBtn.classList.remove("on");ttsBtn.setAttribute("aria-pressed","false");ttsBtn=null}}
+function stopSpeak(){if(!TTS)return;ttsOff();try{speechSynthesis.cancel()}catch(e){}}
+/* parts: 문단마다 한 조각(긴 글을 한 번에 넘기면 크롬이 중간에 끊음) */
+function speak(parts,btn){
+  if(!TTS)return;
+  const again=btn&&btn===ttsBtn;
+  stopSpeak();
+  parts=(parts||[]).map(t=>String(t).replace(/\s+/g," ").trim()).filter(Boolean);
+  if(again||!parts.length)return;
+  const vs=speechSynthesis.getVoices().filter(v=>/^ko/i.test(v.lang)),voice=vs.find(v=>v.localService)||vs[0];
+  if(btn){ttsBtn=btn;btn.classList.add("on");btn.setAttribute("aria-pressed","true")}
+  parts.forEach((t,i)=>{
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang="ko-KR";u.rate=.95;if(voice)u.voice=voice;
+    if(i===parts.length-1)u.onend=u.onerror=()=>{if(ttsBtn===btn)ttsOff()};
+    speechSynthesis.speak(u);
+  });
+}
+/* 읽을 글: 리딩(제목 '현재 상황 — 바보 정방향' 은 '현재 상황, 바보 정방향.' 으로) · 답 말풍선(표시 글자 빼고) · 향기 카드 */
+const after=(el,sel)=>{const b=el.querySelector(sel);return el.textContent.slice(b?b.textContent.length:0)};   // 맨 앞 sel 글자를 뺀 나머지
+function readParts(){
+  return [...document.querySelectorAll("#reading p")].map(p=>{const b=p.querySelector("b");return (b?b.textContent.replace(/\s*—\s*/g,", ")+". ":"")+after(p,"b")});
+}
+function bubbleParts(msg){return after(msg.querySelector(".bubble"),".src").split("\n")}
+function scentParts(btn){
+  const c=btn.closest(".scent");
+  return [c.querySelector("h3").textContent+" 향기",c.querySelector(".from").textContent,...[...c.querySelectorAll("p")].map(p=>after(p,".aitag"))];
+}
+/* 답 말풍선 옆 🔊 (AI 쪽 말풍선만 — 학생이 쓴 질문은 읽지 않음) */
+function addSpeak(msg){
+  if(!TTS||msg.querySelector(".speak"))return;
+  const b=document.createElement("button");
+  b.type="button";b.className="speak icon";b.textContent="🔊";
+  b.setAttribute("aria-label","이 답 읽어 주기");b.setAttribute("aria-pressed","false");
+  b.onclick=()=>speak(bubbleParts(msg),b);
+  msg.appendChild(b);
+}
+
+/* ── 카드 그림 이야기 ── 리딩 결과의 카드를 누르면 큰 그림 · 그림 속 이야기(story) · 눌러 보는 상징(look) · '나라면?'(ask).
+   '이걸 물어볼래요'는 창을 닫고 질문 칸에 넣기만 함(보내지 않음 — 보낼 때 안전 확인·남은 질문 수는 ask() 가 그대로) */
+function cardKey(e,i){if(e.key==="Enter"||e.key===" "){e.preventDefault();cardInfo(i)}}
+function cardInfo(i){
+  const d=state.draw[i];
+  if(!d||state.flag)return;
+  const look=d.look||[],chat=!!document.getElementById("q"),left=askCount<ASK_LIMIT;
+  const askHint=!chat?"마음속으로 답해 보거나, 선생님·친구와 이야기해 봐요.":!left?"오늘 AI 질문은 다 썼어요. 선생님·친구와 이야기해 봐요.":"";
+  sheet(`<h3>${esc(d.ko)}</h3>
+    <p class="storysub">${i+1}. ${roles[i]} · ${d.rev?"역방향":"정방향"}</p>
+    <div class="storybox">${img(d,d.rev?'class="rev"':"")}
+      <div>
+        <p class="story-text" id="storytext">${esc(d.story||"")}</p>
+        ${speakBtn("storyParts()","")}
+        ${look.length?`<p class="looklbl">그림에서 찾아봐요 · 눌러 보세요</p>
+        <div class="looks">${look.map(([s],k)=>`<button type="button" class="chip lookchip" aria-expanded="false" aria-controls="lm${k}" onclick="lookToggle(this)">${esc(s)}</button>`).join("")}</div>
+        ${look.map(([s,m],k)=>`<p class="lookmean" id="lm${k}" hidden><b>${esc(s)}</b> ${esc(m)}</p>`).join("")}`:""}
+        ${d.ask?`<div class="askbox"><b>나라면?</b><p id="storyask">${esc(d.ask)}</p>
+          ${chat&&left?`<button type="button" class="btn" onclick="askThis(${i})">이걸 물어볼래요</button>`:`<p class="askhint">${askHint}</p>`}</div>`:""}
+      </div>
+    </div>
+    <div class="nav"><button class="btn primary" onclick="closeSheet()">닫기</button></div>`,"story");
+}
+function storyParts(){return ["storytext","storyask"].map(id=>document.getElementById(id)).filter(Boolean).map(e=>e.textContent)}
+/* 상징 버튼: 누르면 뜻이 보이고, 다시 누르면 숨김 */
+function lookToggle(b){
+  const m=document.getElementById(b.getAttribute("aria-controls")),on=b.getAttribute("aria-expanded")!=="true";
+  b.setAttribute("aria-expanded",on);m.hidden=!on;
+}
+function askThis(i){
+  const d=state.draw[i],q=document.getElementById("q");
+  if(!d||!q||askCount>=ASK_LIMIT)return;
+  closeSheet(true);
+  q.value=d.ask;
+  q.dispatchEvent(new Event("input"));   // 질문 칸 높이를 글에 맞춤
+  q.focus({preventScroll:true});
+  q.scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+paintTools();
 render();
 
 /* ── 화면 맞춤 ──────────────────────────────

@@ -174,6 +174,9 @@ const FORBIDDEN=new RegExp([
   "우울증","조울증","공황\\s*장애","불안\\s*장애","adhd","정신\\s*(?:병|질환|과)"
 ].join("|"),"iu");
 const badReading=t=>FORBIDDEN.test(String(t||""));
+/* 글자가 오는 중에 볼 때: 끝에 카드 이름 '운명의 수레바퀴'가 덜 온 부분('운명', '운명의 수레' …)은 아직 판단하지 않음
+   (그대로 보면 '운명'만 온 순간 걸려서, 이 카드가 나온 학생의 AI 리딩이 늘 준비된 풀이로 바뀌었어요). 다 받은 뒤에는 badReading 으로 한 번 더 봐요 */
+const badSoFar=t=>badReading(String(t||"").replace(/운\s*(?:명\s*(?:의\s*(?:수\s*(?:레\s*(?:바\s*)?)?)?)?)?$/,""));
 
 /* AI 리딩 글 → [{head, body}]. ■ 로 시작하는 줄이 제목, 그 아래 줄들이 본문.
    글자가 오는 중에도 부를 수 있어요(그때까지 온 만큼만 나눔). 마크다운 기호는 지움 */
@@ -272,7 +275,7 @@ function studentTokens(){
 }
 
 const Prompts={ASK_LIMIT,HISTORY_MAX,QA_MAX_TOKENS,SAFETY_BLOCK,QA_SYSTEM,firstTurn,buildMessages,
-  READING_MAX_TOKENS,EXTRAS_MAX_TOKENS,READING_TITLES,READING_SYSTEM,buildReadingUser,FORBIDDEN,badReading,parseReading,readingOk,
+  READING_MAX_TOKENS,EXTRAS_MAX_TOKENS,READING_TITLES,READING_SYSTEM,buildReadingUser,FORBIDDEN,badReading,badSoFar,parseReading,readingOk,
   EXTRAS_SYSTEM,buildExtrasUser,parseExtras,studentTokens};
 if(node)module.exports=Prompts;
 if(typeof window!=="undefined")window.Prompts=Prompts;
