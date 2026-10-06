@@ -440,6 +440,8 @@ h2{letter-spacing:0}
 }
 
 </style>
+<link rel="stylesheet" href="planning.css">
+<script src="planning-model.js"></script>
 </head>
 <body>
 <div class="app">
@@ -451,8 +453,8 @@ h2{letter-spacing:0}
       <button class="iconbtn" onclick="help()" aria-label="도움말">?</button>
     </div>
     <div class="masthead" id="masthead">
-      <h1>마음의<br>향기 타로</h1>
-      <div class="sub">카드의 상징과 배열을 바탕으로<br>현재 마음을 읽습니다.</div>
+      <h1>마음의 향기 타로</h1>
+      <div class="sub">마음에서 떠올린 향을 나만의 작품으로 기획해요.</div>
     </div>
     <div class="progress" id="progress"></div>
     <div class="content" id="screen"></div>
@@ -583,15 +585,15 @@ function row(label,desc,sel,onclick,color){
     <span class="chev">›</span></button>`;
 }
 
-function prog(){let h="";for(let i=0;i<5;i++)h+=`<span class="${i<=state.step?"on":""}"></span>`;progressEl.innerHTML=h}
+function prog(){let h="";for(let i=0;i<8;i++)h+=`<span class="${i<=state.step?"on":""}"></span>`;progressEl.innerHTML=h;progressEl.setAttribute("aria-label",`전체 8단계 중 ${state.step+1}단계`)}
 function saveNote(){const t=document.getElementById("note");if(t)state.note=t.value}
 function next(){saveNote();state.step++;render()}
 function prev(){saveNote();state.step--;render()}
 function setColor(i){state.color=colors[i][0];render()}
 function setTopic(i){saveNote();state.topic=topics[i][0];render()}
-function restart(){state={step:-1,color:null,topic:null,note:"",draw:[],reading:"",scents:[]};deck=null;askCount=0;chatHistory=[];render()}
-function redraw(){state.draw=[];deck=null;askCount=0;chatHistory=[];state.step=2;render()}
-function start(){state.step=0;render()}
+function restart(){if(window.ScentPlanner)ScentPlanner.reset();state={step:-1,color:null,topic:null,note:"",draw:[],reading:"",scents:[]};deck=null;askCount=0;chatHistory=[];render()}
+function redraw(){if(window.ScentPlanner&&ScentPlanner.hasDraft()){if(!confirm("카드를 다시 뽑으면 작성한 기획서가 지워져요. 다시 뽑을까요?"))return;ScentPlanner.reset()}state.draw=[];deck=null;askCount=0;chatHistory=[];state.step=2;render()}
+function start(){if(window.ScentPlanner&&ScentPlanner.hasDraft()){ScentPlanner.newActivity();return}state.step=0;render()}
 function toCover(){state.step=-1;render()}
 
 
@@ -760,13 +762,16 @@ function menu(){
 
 function help(){
   sheet(`<h3>이렇게 진행해요</h3>
-    <p class="lead">다섯 단계로 지금의 마음을 살펴봅니다.</p>
+    <p class="lead">타로에서 영감을 얻고, 손님을 생각하며 내 작품을 기획해요.</p>
     <ol>
       <li><b>감정 색</b> — 지난 시간에 정한 색을 고릅니다.</li>
       <li><b>주제</b> — 오늘 묻고 싶은 것을 하나 고릅니다.</li>
       <li><b>카드</b> — 섞인 카드 중 세 장을 고릅니다.</li>
       <li><b>리딩</b> — 세 카드를 이어서 읽습니다.</li>
       <li><b>향기</b> — 리딩과 이어지는 향기를 제안받습니다.</li>
+      <li><b>손님과 느낌</b> — 누구를 위한 향기 작품인지 정합니다.</li>
+      <li><b>이름과 소개</b> — AI 제안이나 예시를 참고해 내 말로 다듬습니다.</li>
+      <li><b>기획서</b> — 선택한 이유까지 적고, 파일로 받아 둡니다.</li>
     </ol>
     <div class="nav"><button class="btn primary" onclick="closeSheet()">닫기</button></div>`);
 }
@@ -848,27 +853,30 @@ function render(){
   const onCover=state.step===-1;
   document.body.classList.toggle("on-cover",onCover);
   document.body.classList.toggle("on-hero",state.step===0);
+  document.body.classList.toggle("on-planning",state.step>=5);
+  if(window.ScentPlanner)ScentPlanner.onStep(state.step);
   if(onCover){coverScreen();scrollUp();return}
-  const names=["s-color","s-topic","s-draw","s-reading","s-scent"];
+  const names=["s-color","s-topic","s-draw","s-reading","s-scent","s-plan-brief","s-plan-editor","s-plan-result"];
   screenEl.className="content "+(names[state.step]||"");
   prog();
   if(state.step===0)colorScreen();
   else if(state.step===1)topicScreen();
   else if(state.step===2)drawScreen();
   else if(state.step===3)readingScreen();
-  else scentScreen();
+  else if(state.step===4)scentScreen();
+  else ScentPlanner.render(state.step);
   scrollUp();
 }
 
 /* 표지에 얹는 제목 — 이 문구만 바꾸면 표지 제목이 바뀝니다.
-   (이미지 속 옛 제목은 아래 .cover-title 패널이 가립니다) 줄바꿈은 <br> */
-const COVER_TITLE="내 마음을 감싸는<br>위로의 향기";
+   이미지 속 옛 제목은 아래 .cover-title 패널이 가립니다. */
+const COVER_TITLE="내 마음을 감싸는 위로의 향기";
 function coverScreen(){
   screenEl.className="content cover";
   screenEl.innerHTML=`<div class="poster" onclick="start()">
     <img src="${COVER}" alt="표지">
     <div class="cover-title"><span>${COVER_TITLE}</span></div>
-    <button class="start" aria-label="시작하기"></button></div>`;
+    <button class="start" aria-label="시작하기"></button></div>`+(window.ScentPlanner?ScentPlanner.cover():"");
 }
 
 function colorScreen(){
@@ -886,7 +894,7 @@ function topicScreen(){
   screenEl.innerHTML=panel(head(2,"오늘 묻고 싶은 주제",
     "질문은 자세히 설명하지 않아도 됩니다. 리딩은 선택한 주제와 카드 배열을 중심으로 진행됩니다.")
    +`<div class="rows">${topics.map((t,i)=>row(t[0],t[1],state.topic===t[0],`setTopic(${i})`)).join("")}</div>`
-   +`<textarea id="note" placeholder="선택 입력 · 요즘 가장 마음에 걸리는 일을 한 문장으로 적어도 됩니다.">${state.note}</textarea>`)
+   +`<textarea id="note" placeholder="선택 입력 · 요즘 가장 마음에 걸리는 일을 한 문장으로 적어도 됩니다.">${esc(state.note)}</textarea>`)
    +`<div class="nav"><button class="btn" onclick="prev()">이전</button>
       <button class="btn primary" ${state.topic?"":"disabled"} onclick="next()">카드 펼치기</button></div>`+mark;
 }
@@ -1029,7 +1037,7 @@ function makeReading(){
   state.reading=colorPart+`<p><b>현재 상황 — ${a.ko} ${a.rev?"역방향":"정방향"}</b><br>${meaning(a)}. ${state.topic}이라는 주제에서 지금은 이 카드의 에너지가 가장 앞에 나타납니다.</p>
 <p><b>보이지 않는 영향 — ${b.ko} ${b.rev?"역방향":"정방향"}</b><br>${meaning(b)}. 겉으로 드러난 고민보다 이 부분이 마음속 판단과 반응에 더 크게 영향을 주고 있을 수 있습니다.</p>
 <p><b>앞으로 취할 태도 — ${c.ko} ${c.rev?"역방향":"정방향"}</b><br>${meaning(c)}. 이 카드는 미래를 단정하는 것이 아니라, 지금 선택할 수 있는 태도와 방향을 보여줍니다.</p>
-<p><b>세 카드의 흐름</b><br>${combine(a,b,c)} ${state.note?`"${state.note}"라는 고민에서는 결과를 서두르기보다 카드가 보여준 흐름을 기준으로 작은 행동 하나를 정하는 것이 좋겠습니다.`:"지금은 정답을 맞히기보다, 세 카드가 공통으로 말하는 흐름을 알아차리는 것이 중요합니다."}${colorTie}</p>`;
+<p><b>세 카드의 흐름</b><br>${combine(a,b,c)} ${state.note?`"${esc(state.note)}"라는 고민에서는 결과를 서두르기보다 카드가 보여준 흐름을 기준으로 작은 행동 하나를 정하는 것이 좋겠습니다.`:"지금은 정답을 맞히기보다, 세 카드가 공통으로 말하는 흐름을 알아차리는 것이 중요합니다."}${colorTie}</p>`;
   state.scents=pickScents();
 }
 
@@ -1060,7 +1068,7 @@ function scentScreen(){
    +`<div class="scent-grid" style="margin-top:26px">${state.scents.map((x,i)=>`<div class="scent"><small>SCENT 0${i+1}</small><h3>${esc(x.name)}</h3><p>${esc(x.desc||MOOD_DESC[x.mood]||"카드 리딩과 연결된 향기")}</p></div>`).join("")}</div>`)
    +`<div class="notice">향기는 심리 치료나 의학적 처방이 아니라, 카드 리딩에서 떠오른 분위기를 감각적으로 연결하기 위한 제안입니다.</div>
     <div class="nav"><button class="btn" onclick="prev()">이전</button>
-      <button class="btn primary" onclick="restart()">처음부터</button></div>`+mark;
+      <button class="btn primary" onclick="ScentPlanner.begin()">이 향기로 작품 기획하기</button></div>`+mark;
 }
 
 function desc(x){
@@ -1246,7 +1254,7 @@ function localAnswer(){
   const MIN_SCALE=0.8;   // 이보다 더 줄이지 않음(글씨 가독성). 넘치면 그 화면만 세로 스크롤.
   function fit(){
     // 모바일은 제외 — 원래대로
-    if(window.matchMedia("(max-width:700px)").matches){shell.style.transform="";shell.style.marginBottom="";return}
+    if(document.body.classList.contains("on-planning")||window.matchMedia("(max-width:700px)").matches){shell.style.transform="";shell.style.marginBottom="";return}
     shell.style.transform="";shell.style.marginBottom="";   // 원래 크기로 되돌려 실측
     const natH=shell.offsetHeight, natW=shell.offsetWidth;
     if(!natH)return;
@@ -1269,4 +1277,5 @@ function localAnswer(){
 })();
 
 </script>
+<script src="planning.js"></script>
 </body></html>

@@ -1,0 +1,78 @@
+@font-face{font-family:'S-Core Dream';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-4Regular.woff') format('woff');font-weight:400;font-display:swap}
+@font-face{font-family:'S-Core Dream';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-6Bold.woff') format('woff');font-weight:600 900;font-display:swap}
+:root{--sans:'S-Core Dream','Apple SD Gothic Neo','Malgun Gothic',sans-serif;--serif:var(--sans)}
+body{word-break:keep-all;overflow-wrap:anywhere}
+button,input,textarea,select{font-family:var(--sans)}
+.progress{grid-template-columns:repeat(8,1fr)}
+.on-planning .shell{max-width:1080px;transform:none!important;margin-bottom:0!important}
+.on-planning .content{min-height:0;max-width:1000px;margin:auto}
+.on-planning h1{font-size:clamp(23px,4vw,34px)}
+.on-planning .masthead .sub{font-size:14px}
+.plan-step{font-size:12px;letter-spacing:.15em;text-align:center;color:var(--ink-soft);margin:0 0 10px}
+.plan-help{font-size:14px;line-height:1.8;color:var(--ink-soft);margin:10px 0 0}
+.plan-group{border:0;padding:0;min-width:0;margin:30px 0}
+.plan-group legend,.plan-field>span{display:block;font-weight:700;font-size:17px;color:var(--navy);margin-bottom:12px}
+.plan-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.plan-option{position:relative;display:block;min-width:0;cursor:pointer}
+.plan-option input{position:absolute;top:17px;left:14px;accent-color:var(--navy);width:17px;height:17px;margin:0}
+.plan-option>span{display:block;height:100%;border:1px solid var(--line);padding:15px 14px 16px 40px;background:#fffaf0;border-radius:8px;line-height:1.6;font-size:15px}
+.plan-option strong,.plan-option small{display:block}
+.plan-option small{font-size:12px;margin-top:8px;color:var(--ink-soft);line-height:1.7}
+.plan-option input:checked+span{border-color:var(--navy);background:#e8e9e3;box-shadow:inset 0 0 0 1px var(--navy)}
+.plan-option input:focus-visible+span{outline:3px solid var(--gold);outline-offset:3px}
+.plan-feelings{grid-template-columns:repeat(5,minmax(0,1fr))}
+.plan-summary{border-left:3px solid var(--gold);padding:16px 20px;background:#eee6d1;line-height:1.8;margin:24px 0;font-size:14px}
+.plan-summary p{margin:4px 0}
+.plan-editor-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:28px;align-items:start}
+.plan-assist{background:#ede5cf;padding:22px;border-radius:8px}
+.plan-assist h3{font-size:19px;color:var(--navy);margin:0 0 12px}
+.plan-assist .btn{width:100%;margin-top:16px;min-height:48px;font-size:14px}
+.plan-example{margin-top:16px;background:#fffaf0;border:1px solid var(--line);border-radius:6px;padding:18px;line-height:1.8;font-size:14px}
+.plan-example.selected{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+.plan-example h4{font-size:17px;margin:0 0 8px;color:var(--navy)}
+.plan-example p{margin:8px 0}
+.plan-example small{color:var(--ink-soft)}
+.plan-field{display:block;margin:0 0 23px;min-width:0}
+.plan-field input,.plan-field textarea{display:block;width:100%;max-width:100%;margin:0;border:1px solid var(--line);border-radius:6px;padding:14px;background:#fffdf7;color:var(--ink);font-size:16px;line-height:1.7;cursor:text}
+.plan-field textarea{min-height:100px;resize:vertical}
+.plan-field input:focus-visible,.plan-field textarea:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.plan-status{font-size:14px;line-height:1.8;color:var(--ink-soft);margin:16px 0 0;min-height:1.8em}
+.plan-error{color:#953c2e;font-weight:600}
+.plan-storage{font-size:12px;color:var(--ink-soft);line-height:1.8;text-align:center;margin:24px 0 0}
+.plan-badge{display:inline-block;padding:5px 10px;border:1px solid var(--line);border-radius:20px;font-size:12px;color:var(--ink-soft)}
+.plan-result{background:#fffaf0;border:1px solid var(--gold);padding:clamp(22px,4vw,42px);border-radius:8px;margin-top:28px}
+.plan-result h3{font-size:clamp(25px,5vw,38px);color:var(--navy);line-height:1.5;margin:14px 0}
+.plan-result .plan-intro{font-size:17px;line-height:1.9;white-space:pre-wrap}
+.plan-result dl{display:grid;grid-template-columns:130px minmax(0,1fr);gap:15px 22px;line-height:1.8;font-size:15px;border-top:1px solid var(--line);padding-top:24px;margin-top:26px}
+.plan-result dt{color:var(--ink-soft)}
+.plan-result dd{margin:0;white-space:pre-wrap;min-width:0}
+.plan-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.plan-actions .btn{flex:1;min-width:150px;min-height:48px}
+.plan-next{margin-top:26px;padding:22px;border:1px dashed var(--gold);border-radius:8px;line-height:1.9;font-size:14px}
+.plan-next h3{margin:0 0 8px;font-size:18px;color:var(--navy)}
+.plan-next p{margin:8px 0}
+.plan-resume{position:relative;z-index:2;padding:16px 22px;background:var(--tile);text-align:center}
+.plan-resume p{font-size:13px;line-height:1.8;margin:0 0 12px}
+.plan-resume .btn{min-height:48px}
+.plan-copy-text{width:100%;font-size:14px;min-height:240px;cursor:text}
+@media(max-width:700px){
+  .plan-choices{grid-template-columns:1fr}
+  .plan-feelings{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .plan-editor-grid{grid-template-columns:1fr;gap:26px}
+  .plan-result dl{grid-template-columns:1fr;gap:5px}
+  .plan-result dd{margin-bottom:16px}
+  .plan-actions{flex-direction:column}
+  .on-planning .content{padding:24px 22px 30px}
+}
+@media(prefers-reduced-motion:reduce){.on-planning *{animation:none!important;scroll-behavior:auto!important}}
+@media print{
+  body{background:white;color:#111}
+  .app{padding:0!important;display:block!important;max-width:none}
+  .shell{width:100%!important;max-width:none!important;border:0;box-shadow:none;transform:none!important;background:white!important;animation:none!important}
+  .shell:before,.corners,.topbar,.masthead,.progress,.plan-actions,.nav,.plan-next,.plan-storage,.plan-status,.plan-step,.s-plan-result>.lead,.s-plan-result>h2{display:none!important}
+  .content{padding:0!important;animation:none!important}
+  .plan-result{margin:0;border:0;padding:16px;background:white}
+  .plan-result h3{font-size:25px}
+  .plan-result dl{display:grid;grid-template-columns:130px minmax(0,1fr)}
+  .plan-result dd,.plan-result dt{break-inside:avoid}
+}

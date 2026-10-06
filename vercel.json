@@ -2,6 +2,9 @@
   "functions": {
     "api/ask.js": {
       "maxDuration": 20
+    },
+    "api/plan.js": {
+      "maxDuration": 20
     }
   }
 }
