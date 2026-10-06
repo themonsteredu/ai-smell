@@ -6,7 +6,7 @@
      리딩 화면에서 ☰ 메뉴 → 처음 화면 으로 나가, 다음 학생에게 앞 학생 기록이 남지 않는지 봅니다.
    - 화면 크기마다 '안전 점검'을 한 번 더 합니다: 위험한 고민 한 줄·질문 → 도움 안내 화면(네트워크 호출 없음)
      → 선생님 확인 길게 누르기 → 이어서 하기 / 처음부터, 서버의 SAFETY·RATE 답, 다시 뽑기 후 남은 질문 수,
-     설정에서 키가 다시 보이지 않는지, AI 기능 끄기.
+     설정에서 키가 다시 보이지 않는지, AI 기능 끄기. 준비된 답변은 질문마다 다르고 남은 질문 수를 줄이지 않음.
    - pageerror 나 console error 가 하나라도 나면 실패합니다.
    - 숨긴 카드(content.js 의 hidden:true) 그림이 요청되거나 화면 어디에(부채꼴·칸·결과) 보이면 실패합니다.
    - 주소가 localhost 면 vercel.json 의 보안 헤더(CSP 등)를 똑같이 붙여서 확인합니다.
@@ -107,7 +107,7 @@ async function run(browser,vp,n){
   check(await page.locator(".poster").isVisible(),"cover not shown");
   if(n===0){
     // 덱을 많이 만들어 봐도 숨긴 카드·중복이 없어야 함
-    const bad=await page.evaluate(()=>{let b=0;for(let i=0;i<3000;i++){const d=makeDeck();if(d.some(c=>c.hidden)||new Set(d.map(c=>c.ko)).size!==d.length)b++}return b});
+    const bad=await page.evaluate(()=>{let b=0;for(let i=0;i<3000;i++){const d=Reading.makeDeck();if(d.some(c=>c.hidden)||new Set(d.map(c=>c.ko)).size!==d.length)b++}return b});
     check(bad===0,`makeDeck produced ${bad} bad decks`);
   }
   await page.locator(".poster .start").click();
@@ -162,8 +162,15 @@ async function run(browser,vp,n){
   check(await page.locator("#chatlog .msg").count()===1,"chat should start with the greeting only");
   check((await page.textContent("#chatlog .msg .src")).includes("안내"),"greeting should carry the 안내 tag");
   await h.askQ("이 카드는 무슨 뜻이에요?",3);
-  check((await page.textContent("#chathint")).includes("남은 질문 2개"),"hint not updated after a question");
+  check((await page.textContent("#chathint")).includes("남은 질문 3개"),"a prepared (non-AI) answer must not use up a question");
   check((await page.locator("#chatlog .msg.ai .src").last().textContent()).includes("준비된 답변"),"NO_KEY answer should be tagged 준비된 답변");
+  // 준비된 답변도 질문에 따라 달라야 함(예전에는 세 질문 모두 같은 문단)
+  await h.askQ("역방향은 나쁜 건가요?",5);
+  const local=await page.$$eval("#chatlog .msg.ai .bubble",bs=>bs.slice(-2).map(b=>b.textContent));
+  check(local[0]!==local[1],"two different questions got the same prepared answer");
+  check(!/undefined|NaN|\[object/.test(local.join(" ")),"bad text in a prepared answer: "+local.join(" | "));
+  const rd=await page.textContent(".reading");
+  check(!/undefined|NaN|\[object|관계’?이라는|색 색|습니다/.test(rd),"reading text problem: "+rd);
   const sent=h.api.calls[h.api.calls.length-1];
   check(sent&&Array.isArray(sent.cards)&&sent.cards.every(c=>Object.keys(c).sort().join()==="ko,rev")&&!("reading" in sent)&&!JSON.stringify(sent).includes("메모글"),
     "/api/ask body must carry only {ko,rev} cards, no reading, no note: "+JSON.stringify(sent));
@@ -185,10 +192,13 @@ async function run(browser,vp,n){
     await nav(primary());
     await atStep("s-scent");
     check(await page.locator(".scent").count()===3,"expected 3 scents");
+    check(await page.locator(".scent .from").count()===3,"each scent should say which card it goes with");
+    const nt=await page.textContent("#screen .notice");
+    for(const w of ["부채질","피부","먹지","알레르기","선생님"])check(nt.includes(w),"smell-safety note missing "+w);
     await nav(page.locator("#screen .nav .btn:not(.primary)"));
     await atStep("s-reading");
-    check(await page.locator("#chatlog .msg").count()===3,"chat log not replayed after 이전");
-    check((await page.textContent("#chathint")).includes("남은 질문 2개"),"hint wrong after 이전");
+    check(await page.locator("#chatlog .msg").count()===5,"chat log not replayed after 이전");
+    check((await page.textContent("#chathint")).includes("남은 질문 3개"),"hint wrong after 이전");
     await domHidden("reading again");
     await wait(500);
     await primary().dblclick();
@@ -261,17 +271,21 @@ async function safetyRun(browser,vp){
   check(await page.locator("#chatlog .msg").count()===1,"chat should hold only the greeting after resume");
   check((await page.textContent("#chathint")).includes("남은 질문 3개"),"crisis question used up a question");
 
-  // 3) 질문 1개 → 다시 뽑기 → 남은 질문 수는 그대로(같은 학생)
+  // 3) AI가 답한 질문 1개 → 다시 뽑기 → 남은 질문 수는 그대로(같은 학생)
+  api.reason="OK";api.answer="AI가 쓴 답이에요.";
   await h.askQ("이 카드는 무슨 뜻이에요?",3);
+  check((await page.locator("#chatlog .msg.ai .src").last().textContent()).includes("AI 답변"),"server OK answer should be tagged AI 답변");
+  check((await page.textContent("#chathint")).includes("남은 질문 2개"),"an AI answer should use up a question");
   await nav(page.locator("#screen .nav .btn",{hasText:"다시 뽑기"}));
   await atStep("s-draw");
   await h.drawThree();
   check((await page.textContent("#chathint")).includes("남은 질문 2개"),"다시 뽑기 refilled the question count");
 
-  // 4) 서버가 RATE → 준비된 답변 + 한 줄 안내(한 번만)
-  api.reason="RATE";
+  // 4) 서버가 RATE → 준비된 답변 + 한 줄 안내(한 번만), 남은 질문 수는 그대로
+  api.reason="RATE";api.answer=null;
   await h.askQ("역방향은 나쁜 건가요?",4);
   check((await page.textContent("#chatlog")).includes("지금은 AI가 답할 수 없어서"),"no notice when AI is unavailable");
+  check((await page.textContent("#chathint")).includes("남은 질문 2개"),"a prepared answer after RATE used up a question");
 
   // 5) 서버가 SAFETY(AI가 [도움필요]로 판단) → 도움 안내 → 처음부터는 전부 지움
   api.reason="SAFETY";api.answer="말해 줘서 고마워요. 1388";

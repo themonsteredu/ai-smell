@@ -1,4 +1,4 @@
-# 사이트에 올리지 않는 파일 (테스트·메모·압축파일). content.js, safety.js, prompts.js 는 api/*.js 가 쓰므로 빼면 안 됩니다.
+# 사이트에 올리지 않는 파일 (테스트·메모·압축파일). content.js, safety.js, prompts.js 는 api/*.js 가 쓰고, reading.js 는 앱이 쓰므로 빼면 안 됩니다.
 tests/
 *.md
 *.zip

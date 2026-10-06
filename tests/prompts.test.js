@@ -55,15 +55,16 @@ test("one prompt source: no SYSTEM/buildPrompt copies left in index.html or api/
     assert.ok(!/function\s+buildPrompt/.test(src),name+" defines its own buildPrompt");
   }
   assert.ok(api.includes('require("../prompts.js")')&&api.includes('require("../safety.js")'));
-  const order=["content.js","safety.js","prompts.js"].map(f=>html.indexOf(`<script src="${f}"></script>`));
-  assert.ok(order.every(i=>i>0)&&order[0]<order[1]&&order[1]<order[2],"script order "+order);
-  assert.ok(order[2]<html.indexOf("<script>"),"shared scripts load before the inline app script");
+  const order=["content.js","safety.js","prompts.js","reading.js"].map(f=>html.indexOf(`<script src="${f}"></script>`));
+  assert.ok(order.every((i,k)=>i>0&&(k===0||order[k-1]<i)),"script order "+order);
+  assert.ok(order[3]<html.indexOf("<script>"),"shared scripts load before the inline app script");
 });
 
 test("privacy: the student's note never reaches the reading or the AI context",()=>{
   const html=read("index.html");
-  const mk=html.slice(html.indexOf("function makeReading"),html.indexOf("function combine"));
-  assert.ok(mk.includes("state.note")&&!/state\.note(?!\?)/.test(mk),"makeReading may only test whether a note exists, never print it");
+  const mk=html.slice(html.indexOf("function makeReading"),html.indexOf("function readingScreen"));
+  assert.ok(mk.includes("Reading.make(")&&mk.includes("state.note")&&!/state\.note(?!\?)/.test(mk),"makeReading may only pass whether a note exists, never the note");
+  assert.ok(!/\bnote\b/i.test(read("reading.js")),"reading.js must never get the note text");
   const ctxFn=html.slice(html.indexOf("function chatCtx"),html.indexOf("async function ask()"));
   assert.ok(ctxFn.includes("cards")&&!ctxFn.includes("note"),"chatCtx sends the note");
   assert.ok(!/value="\$\{[^}]*apiKey/.test(html),"settings echoes the stored key into value=");

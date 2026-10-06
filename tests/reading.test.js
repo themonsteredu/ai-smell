@@ -1,0 +1,166 @@
+/* reading.js 점검 — 5,000번 뽑아 보며: 숨긴 카드가 안 나오는지, 요약 문장이 모두 나올 수 있는지,
+   조사가 받침에 맞는지, undefined·NaN 같은 글자가 섞이지 않는지, 향기가 세 카드에서 고루 오는지, 준비된 답변이 질문마다 다른지 */
+const test=require("node:test");
+const assert=require("node:assert/strict");
+const fs=require("fs");
+const path=require("path");
+const C=require("../content.js");
+const R=require("../reading.js");
+
+const N=5000;
+const HIDDEN=new Set(C.cards.filter(c=>c.hidden).map(c=>c.ko));
+const card=(ko,rev=false)=>({...C.cards.find(c=>c.ko===ko),rev});
+const any=a=>a[Math.floor(Math.random()*a.length)];
+const strip=h=>h.replace(/<[^>]+>/g," ");
+const QUESTIONS=["이 카드는 무슨 뜻이에요?","왜 이 카드가 나왔어요?","역방향은 나쁜 건가요?","오늘 해 볼 작은 행동은?",
+  "죽음 카드 무서워요","추천 향기는 왜 이거예요?","숨은 마음이 뭐예요?","친구랑 화해할 수 있을까요?","시험이 걱정돼요","음…","ㅋㅋ"];
+
+/* 이름 바로 뒤의 조사가 받침과 맞는지 찾아봄. 이름 = 보이는 카드 · 주제 · 색 · 기본 향기 */
+const TOKENS=[...C.deckPool().map(c=>c.ko),...C.topics.map(t=>t[0]),...C.colors.map(c=>c[0]),...C.DEFAULT_SCENTS.map(s=>s.name)];
+const PAIRS=[["이라는","라는"],["이에요","예요"],["이","가"],["은","는"],["을","를"],["과","와"]];
+function particleErrors(text){
+  const bad=[];
+  for(const tok of TOKENS){
+    for(let i=text.indexOf(tok);i>=0;i=text.indexOf(tok,i+1)){
+      if(i>0&&/[가-힣0-9]/.test(text[i-1]))continue;              // 다른 낱말의 일부
+      const rest=text.slice(i+tok.length).replace(/^[’”'"]/,"");
+      if(/^[0-9]/.test(rest))continue;                              // '컵 1' 이 아니라 '컵 10'
+      const jong=R.hasJong(tok);
+      for(const [a,b] of PAIRS){
+        const wrong=jong?b:a;
+        if(rest.startsWith(wrong)&&!/^[가-힣]/.test(rest.slice(wrong.length)))bad.push(text.slice(Math.max(0,i-8),i+tok.length+6));
+      }
+    }
+  }
+  return bad;
+}
+function cleanText(t,where){
+  assert.ok(typeof t==="string"&&t.trim(),where+": empty");
+  assert.ok(!/undefined|NaN|\[object|null/.test(t),where+": "+t);
+  assert.deepEqual(particleErrors(t),[],where);
+  for(const h of HIDDEN)assert.ok(!new RegExp(`(^|[^가-힣])${h}( 카드| 정방향| 역방향|[은는이가을를과와]\\s)`).test(t),where+": names hidden card "+h);
+}
+
+/* 실제 앱과 같은 길로 한 판 뽑기: 덱 만들기 → 부채꼴에서 아무 자리나 세 번 */
+function deal(){
+  const deck=R.makeDeck(),draw=[];
+  while(draw.length<3){
+    const i=Math.floor(Math.random()*deck.length);
+    if(draw.some(d=>d.ko===deck[i].ko))continue;   // 앱에서는 이미 뽑은 카드가 숨겨져 다시 못 누름
+    draw.push(R.drawOne(deck,i,draw));
+  }
+  return {deck,draw};
+}
+
+test(`${N} random draws: no hidden card, every summary reachable, clean text, correct particles`,()=>{
+  const flows=new Map(Object.values(R.FLOW).map(t=>[t,0]));
+  const from=[0,0,0];let notLiteral=0,rev=0;
+  for(let k=0;k<N;k++){
+    const {deck,draw}=deal();
+    assert.equal(deck.length,Math.min(R.FAN_MAX,C.deckPool().length));
+    assert.equal(new Set(deck.map(c=>c.ko)).size,deck.length,"deck has duplicates");
+    assert.ok(deck.every(c=>!c.hidden),"hidden card in the deck");
+    assert.ok(draw.every(c=>!c.hidden&&typeof c.rev==="boolean"),"hidden card drawn");
+    assert.equal(new Set(draw.map(c=>c.ko)).size,3,"duplicate card drawn");
+    rev+=draw.filter(c=>c.rev).length;
+
+    const topic=any(C.topics)[0],color=Math.random()<.9?any(C.colors)[0]:null,hasNote=Math.random()<.5;
+    const html=R.make({color,topic,draw,hasNote});
+    const text=strip(html);
+    cleanText(text,"reading");
+    assert.equal((html.match(/<p>/g)||[]).length,color?5:4,"paragraph count");
+    assert.ok(text.includes(`‘${topic}’${R.hasJong(topic)?"이라는":"라는"} 주제`),"topic phrase: "+topic);
+    if(!R.hasJong(topic))assert.ok(!text.includes(topic+"’이라는")&&!text.includes(topic+"이라는"),"이라는 after a vowel-final topic");
+    for(const d of draw)if(d.notLiteral){assert.ok(text.includes(d.notLiteral),d.ko+": not-literal note missing");notLiteral++}
+    const flow=[...flows.keys()].find(t=>text.includes(t));
+    assert.ok(flow,"no summary sentence");flows.set(flow,flows.get(flow)+1);
+    assert.equal(R.combine(...draw),flow);
+
+    const scents=R.pickScents(draw,C.DEFAULT_SCENTS);
+    assert.equal(scents.length,3);
+    assert.equal(new Set(scents.map(s=>s.name)).size,3,"duplicate scent");
+    for(const s of scents){
+      assert.ok(s.from===null||[0,1,2].includes(s.from),"bad from "+s.from);
+      if(s.from!==null){
+        const moods=draw[s.from].scent.map(n=>C.SCENT_MOOD[n]);
+        assert.ok(moods.includes(s.mood),`${s.name} is not linked to ${draw[s.from].ko}`);
+        from[s.from]++;
+      }
+    }
+
+    const q=any(QUESTIONS),n=Math.floor(Math.random()*4);
+    cleanText(R.localAnswer(q,n,{draw,topic,scents}),"answer to "+q);
+  }
+  for(const [t,c] of flows)assert.ok(c>0,"summary never reached: "+t);
+  for(const [t,c] of flows)assert.ok(c<N*.6,`one summary dominates (${c}/${N}): ${t}`);
+  // 세 카드가 향기를 고루 정함(예전에는 3번 카드가 3%뿐이었음)
+  for(let i=0;i<3;i++)assert.ok(from[i]>N*.6,`card ${i+1} decides a scent in only ${from[i]}/${N} draws`);
+  assert.ok(notLiteral>0,"죽음/탑 never drawn");
+  assert.ok(rev/(N*3)>.2&&rev/(N*3)<.36,"reversed rate "+rev/(N*3));
+});
+
+test("drawOne never returns a hidden or already-drawn card, even when the deck slot repeats",()=>{
+  for(let k=0;k<2000;k++){
+    const deck=R.makeDeck(),draw=[R.drawOne(deck,0,[])];
+    const again=R.drawOne(deck,0,draw);   // 같은 자리를 또 누른 것처럼
+    assert.ok(!again.hidden&&again.ko!==draw[0].ko);
+    assert.ok(!R.drawOne([C.cards.find(c=>c.hidden)],0,[]).hidden,"must not trust a hidden deck entry");
+  }
+});
+
+test("heavy() follows each card's meaning, not just its orientation",()=>{
+  // 역방향인데 뜻이 가벼운 카드 두 장 → '엉켜 있다'는 요약이 나오면 안 됨
+  assert.notEqual(R.combine(card("달",true),card("십자가",true),card("컵 2")),R.FLOW.knot);
+  assert.notEqual(R.combine(card("컵 4",true),card("컵 5",true),card("컵 7",true)),R.FLOW.knot);
+  // 정방향인데 무거운 카드 두 장 → '엉켜 있다'
+  assert.equal(R.combine(card("탑"),card("달"),card("바보")),R.FLOW.knot);
+  // 마지막 카드가 거꾸로 나온 밝은 카드면 '밝은 쪽'이라 하지 않음
+  assert.equal(R.combine(card("컵 3"),card("컵 2"),card("컵 9")),R.FLOW.bright);
+  assert.notEqual(R.combine(card("컵 3"),card("컵 2"),card("컵 9",true)),R.FLOW.bright);
+  assert.equal(R.combine(card("바보",true),card("컵 2"),card("정원")),R.FLOW.turn);
+  assert.equal(R.combine(card("바보"),card("컵 2",true),card("정원")),R.FLOW.mixed);
+  assert.equal(R.combine(card("바보"),card("컵 2"),card("정원")),R.FLOW.light);
+  // 밝은 마무리 카드 가운데 덱에 실제로 들어 있는 카드가 있어야 그 요약이 나올 수 있음
+  assert.ok(C.deckPool().some(c=>c.bright),"no visible bright card");
+  for(const c of C.cards){
+    for(const f of ["heavyUp","lightDown","bright","hidden"])assert.ok(c[f]===undefined||c[f]===true,`${c.ko}.${f}`);
+    if(c.notLiteral!==undefined)assert.ok(typeof c.notLiteral==="string"&&c.notLiteral.includes("뜻이 아니에요"),c.ko);
+  }
+  for(const ko of ["죽음","탑"])assert.ok(card(ko).notLiteral,ko+" needs a not-literal note");
+});
+
+test("reading is 해요체, never echoes the note, and the reading code never sees the note text",()=>{
+  const draw=[card("바보"),card("죽음",true),card("컵 10")];
+  const a=strip(R.make({color:"빨강",topic:"가족",draw,hasNote:true}));
+  const b=strip(R.make({color:"빨강",topic:"가족",draw,hasNote:false}));
+  assert.ok(a.includes("적어 둔 한 줄")&&!b.includes("적어 둔 한 줄"));
+  for(const t of [a,b])assert.ok(!/니다[.!? ]|습니다/.test(t),"합니다체 in the reading: "+t);
+  const src=fs.readFileSync(path.join(__dirname,"..","reading.js"),"utf8");
+  assert.ok(!/\bnote\b/i.test(src)&&!/state\./.test(src),"reading.js must only get hasNote, never the note or global state");
+});
+
+test("local answers depend on the question and rotate, and use the drawn cards",()=>{
+  const draw=[card("죽음"),card("컵 8",true),card("열쇠")];
+  const s={draw,topic:"친구 관계",scents:R.pickScents(draw,C.DEFAULT_SCENTS)};
+  const answers=QUESTIONS.map((q,i)=>R.localAnswer(q,0,s));
+  assert.ok(new Set(answers).size>=8,"too many identical answers: "+new Set(answers).size);
+  const same=[0,1,2].map(n=>R.localAnswer("이 카드는 무슨 뜻이에요?",n,s));
+  assert.equal(new Set(same).size,3,"same question should rotate");
+  assert.ok(R.localAnswer("역방향은 나쁜 건가요?",0,s).includes("컵 8"),"reversed answer names the reversed card");
+  assert.ok(R.localAnswer("죽음 카드 무서워요",0,s).includes(card("죽음").notLiteral),"scary answer uses the not-literal note");
+  assert.ok(R.localAnswer("열쇠 카드는 무슨 뜻이에요?",0,s).startsWith("열쇠는"),"a named card is answered first");
+  assert.ok(R.localAnswer("향기는요?",0,s).includes(s.scents[0].name),"scent answer names the scents");
+  const up={draw:[card("바보"),card("컵 2"),card("정원")],topic:"가족",scents:[]};
+  assert.ok(R.localAnswer("거꾸로 나오면 어때요?",0,up).includes("세 장 모두 바로"),"no reversed card case");
+  for(const q of QUESTIONS)assert.ok(!/니다[.!? ]|습니다/.test(R.localAnswer(q,1,s)),"합니다체: "+q);
+});
+
+test("pickScents works with a short teacher list and with moods no card uses",()=>{
+  const draw=[card("바보"),card("컵 2"),card("닻")];
+  const two=[{name:"A",mood:"calm",desc:""},{name:"B",mood:"calm",desc:""}];
+  const r=R.pickScents(draw,two);
+  assert.equal(r.length,2);assert.equal(new Set(r.map(x=>x.name)).size,2);
+  const odd=[{name:"X",mood:"balance",desc:""},{name:"Y",mood:"balance",desc:""},{name:"Z",mood:"balance",desc:""}];
+  const o=R.pickScents([card("바보"),card("바보"),card("바보")],odd);
+  assert.equal(o.length,3);assert.ok(o.every(x=>x.from===null||x.mood==="balance"));
+});

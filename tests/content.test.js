@@ -69,3 +69,20 @@ test("colors, topics and roles have the expected shapes",()=>{
   assert.equal(C.roles.length,3);
   assert.ok(typeof C.COVER_TITLE==="string"&&C.COVER_TITLE.trim());
 });
+
+test("reading copy: a hook for every topic, 해요체 tails for every role, two-sided colors, no effect claims for scents",()=>{
+  for(const [t] of C.topics)assert.ok(typeof C.TOPIC_HOOK[t]==="string"&&C.TOPIC_HOOK[t].trim(),"TOPIC_HOOK missing "+t);
+  for(const k of Object.keys(C.TOPIC_HOOK))assert.ok(C.topics.some(t=>t[0]===k),"TOPIC_HOOK for unknown topic "+k);
+  assert.equal(C.ROLE_TAIL.length,C.roles.length);
+  for(const tails of C.ROLE_TAIL){
+    assert.ok(Array.isArray(tails)&&tails.length>=3,"each role needs 3+ tails");
+    assert.equal(new Set(tails).size,tails.length,"duplicate tail");
+  }
+  const kid=[...Object.values(C.COLOR_MEANING),...Object.values(C.TOPIC_HOOK),...C.ROLE_TAIL.flat(),...Object.values(C.MOOD_DESC),
+    ...C.cards.map(c=>c.notLiteral).filter(Boolean)];
+  for(const t of kid)assert.ok(!/니다[.!? ]|습니다|니다$/.test(t),"student copy should be 해요체: "+t);
+  for(const c of ["빨강","파랑","보라","회색"])assert.ok(/거나|수도/.test(C.COLOR_MEANING[c]),c+" should name both sides");
+  for(const t of [...Object.values(C.MOOD_DESC),...C.DEFAULT_SCENTS.map(s=>s.desc)])
+    assert.ok(!/가라앉히|끌어올리|잡아 주|잡는|세우는|전환하|열어주|환기/.test(t),"effect claim or hard word: "+t);
+  assert.equal(C.MOODS.find(m=>m[0]==="calm")[1],"차분 · 편안");
+});
