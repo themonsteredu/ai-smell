@@ -31,7 +31,8 @@ const nth=i=>["첫","두","세"][i]+" 번째";
 const FAN_MAX=36;        // 부채꼴에 펼치는 최대 장수 (실제로는 숨기지 않은 카드 수와 36 중 작은 값)
 const REV_CHANCE=.28;    // 카드가 거꾸로(역방향) 나올 확률
 function shuffled(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-const makeDeck=()=>shuffled(C.deckPool()).slice(0,FAN_MAX);
+/* n: 펼칠 장수(휴대폰은 앱이 15를 넘김). 어떤 경우든 FAN_MAX 와 숨기지 않은 카드 수를 넘지 않아요 */
+const makeDeck=(n=FAN_MAX)=>shuffled(C.deckPool()).slice(0,Math.min(n,FAN_MAX));
 /* 부채꼴의 i번째 카드를 뒤집음 → {…카드, rev}. 덱은 겹치지 않지만, 혹시 이미 뽑았거나 숨긴 카드면 남은 카드에서 고름 */
 function drawOne(deck,i,draw){
   let c=deck[i];

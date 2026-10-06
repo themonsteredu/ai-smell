@@ -164,3 +164,18 @@ test("pickScents works with a short teacher list and with moods no card uses",()
   const o=R.pickScents([card("바보"),card("바보"),card("바보")],odd);
   assert.equal(o.length,3);assert.ok(o.every(x=>x.from===null||x.mood==="balance"));
 });
+
+test("makeDeck(n): smaller phone fan, never more than FAN_MAX or the visible pool, never a hidden card",()=>{
+  for(let k=0;k<500;k++){
+    const d=R.makeDeck(15);
+    assert.equal(d.length,Math.min(15,C.deckPool().length));
+    assert.equal(new Set(d.map(c=>c.ko)).size,d.length,"duplicates in a phone deck");
+    assert.ok(d.every(c=>!c.hidden),"hidden card in a phone deck");
+  }
+  assert.equal(R.makeDeck(999).length,Math.min(R.FAN_MAX,C.deckPool().length));
+  assert.equal(R.makeDeck().length,Math.min(R.FAN_MAX,C.deckPool().length));
+  // 휴대폰 부채꼴에서 뽑아도 숨긴 카드가 나오지 않음(drawOne 의 대체 카드 포함)
+  const d=R.makeDeck(15),draw=[];
+  for(let i=0;i<3;i++)draw.push(R.drawOne(d,i,draw));
+  assert.ok(draw.every(c=>!c.hidden));
+});

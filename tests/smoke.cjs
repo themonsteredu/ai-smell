@@ -9,6 +9,11 @@
      설정에서 키가 다시 보이지 않는지, AI 기능 끄기. 준비된 답변은 질문마다 다르고 남은 질문 수를 줄이지 않음.
    - pageerror 나 console error 가 하나라도 나면 실패합니다.
    - 숨긴 카드(content.js 의 hidden:true) 그림이 요청되거나 화면 어디에(부채꼴·칸·결과) 보이면 실패합니다.
+   - 화면·창 점검(ux)을 390x844 · 820x1180 · 1024x768 · 1366x768 · 1920x1080 에서 한 번씩 합니다:
+     표지 그림이 늦어도 자리와 시작 버튼이 보이는지, 넓은 화면에서 색·주제·카드·향기 단계가 스크롤 없이 들어오는지,
+     뒤집은 카드가 탁자 안에 다 보이는지, 리딩 글이 15px 밑으로 줄지 않는지, 설정 '저장'이 창 안에 있는지,
+     Esc·바깥 누르기·고친 내용 확인, '기본값으로'가 저장 전에는 향기 목록을 지우지 않는지, 키보드로 카드 고르기,
+     한글 조합 중 Enter 로 질문이 나가지 않는지.
    - 주소가 localhost 면 vercel.json 의 보안 헤더(CSP 등)를 똑같이 붙여서 확인합니다.
    - /api/ask 는 NO_KEY 로 대신 답하고 api.anthropic.com 은 막습니다(요금이 드는 호출 없음). */
 let pw;
@@ -22,8 +27,10 @@ const BASE=new URL(arg("base","http://localhost:8091/"));
 const RUNS=Math.max(1,parseInt(arg("runs","3"),10)||3);
 const LOCAL=/^(localhost|127\.0\.0\.1|\[::1\])$/.test(BASE.hostname);
 const VIEWPORTS=[{width:390,height:844},{width:1366,height:768}];
+const UX_VIEWPORTS=[{width:390,height:844},{width:820,height:1180},{width:1024,height:768},{width:1366,height:768},{width:1920,height:1080}];
 const HIDDEN_IMGS=CONTENT.cards.filter(c=>c.hidden).map(c=>c.img);
-const FAN=Math.min(36,CONTENT.deckPool().length);
+/* 펼치는 장수: 휴대폰(700px 이하) 15장, 그 밖 36장 — 숨기지 않은 카드 수를 넘지 않음 */
+const fanFor=vp=>Math.min(vp.width<=700?15:36,CONTENT.deckPool().length);
 
 /* vercel.json 의 "/(.*)" 헤더 — 로컬 서버에서도 실제 배포와 같은 CSP 로 돌려 봄 */
 const vercel=JSON.parse(fs.readFileSync(path.join(__dirname,"..","vercel.json"),"utf8"));
@@ -36,7 +43,7 @@ function check(cond,msg){if(!cond)throw new Error(msg)}
 /* 새 브라우저 창 하나와 공통 도우미. api.reason 을 바꾸면 /api/ask 가짜 답이 바뀜(기본 NO_KEY) */
 async function open(browser,vp){
   const ctx=await browser.newContext({viewport:vp});
-  const errors=[],hiddenSeen=new Set(),api={reason:"NO_KEY",answer:null,calls:[]};
+  const errors=[],hiddenSeen=new Set(),api={reason:"NO_KEY",answer:null,calls:[]},dialogs=[];
   await ctx.route("**/*",async route=>{
     const u=new URL(route.request().url());
     if(u.hostname==="api.anthropic.com")return route.abort();
@@ -53,8 +60,9 @@ async function open(browser,vp){
   page.on("pageerror",e=>errors.push("pageerror: "+e.message));
   page.on("console",m=>{if(m.type()==="error")errors.push("console: "+m.text())});
   page.on("request",r=>{if(isHiddenImg(new URL(r.url()).pathname.slice(1)))hiddenSeen.add(r.url())});
-
-  const h={ctx,page,errors,hiddenSeen,api};
+  /* 확인 창(confirm): 다시 뽑기·처음부터·저장 안 하고 닫기. 기본은 '확인', h.answer=false 면 '취소' */
+  const h={ctx,page,errors,hiddenSeen,api,dialogs,answer:true};
+  page.on("dialog",d=>{dialogs.push(d.message());h.answer?d.accept():d.dismiss()});
   h.scr=sel=>page.locator("#screen"+sel);
   h.primary=()=>page.locator("#screen .nav .btn.primary");
   h.atStep=cls=>page.waitForSelector("#screen.content."+cls,{timeout:5000});
@@ -99,7 +107,7 @@ async function open(browser,vp){
 }
 
 async function run(browser,vp,n){
-  const label=`${vp.width}x${vp.height} #${n+1}`;
+  const label=`${vp.width}x${vp.height} #${n+1}`,FAN=fanFor(vp);
   const h=await open(browser,vp);
   const {page,scr,primary,atStep,nav,domHidden}=h;
   try{
@@ -147,6 +155,11 @@ async function run(browser,vp,n){
     await domHidden(`after pick ${k+1}`);
   }
   check((await page.textContent("#counter")).includes("3 / 3"),"counter wrong after 3 picks");
+  const gone=await page.$$eval("#fan .card.hide",cs=>cs.map(c=>c.tabIndex===-1&&c.getAttribute("aria-hidden")==="true"));
+  check(gone.length===3&&gone.every(Boolean),"picked cards should leave the tab order");
+  await wait(800);   // 세 장째 뒤 리딩 보기 버튼이 보이게 스크롤됨
+  const goBox=await page.evaluate(()=>{const r=document.getElementById("go").getBoundingClientRect();return {top:r.top,bottom:r.bottom,h:innerHeight}});
+  check(goBox.top>=0&&goBox.bottom<=goBox.h+1,"리딩 보기 is off-screen after the third card: "+JSON.stringify(goBox));
   check(await page.locator("#go").isEnabled(),"리딩 보기 not enabled after 3 cards");
   await nav(page.locator("#go"));
   await atStep("s-reading");
@@ -176,7 +189,14 @@ async function run(browser,vp,n){
     "/api/ask body must carry only {ko,rev} cards, no reading, no note: "+JSON.stringify(sent));
 
   if(n%2===1){
-    // 메뉴 → 처음 화면: 다음 학생에게 아무것도 남지 않아야 함
+    // 메뉴 → 처음 화면: 리딩이 있으니 한 번 묻고(취소하면 그대로), 확인하면 다음 학생에게 아무것도 남지 않아야 함
+    await wait(500);
+    h.answer=false;
+    await page.click(".menubtn");
+    await page.locator("#sheet .row",{hasText:"처음 화면"}).click();
+    await wait(300);
+    check(h.dialogs.length===1&&await page.locator("#screen.s-reading").count()===1,"처음 화면 should ask first and stay when cancelled");
+    h.answer=true;
     await wait(500);
     await page.click(".menubtn");
     await page.locator("#sheet .row",{hasText:"처음 화면"}).click();
@@ -276,8 +296,9 @@ async function safetyRun(browser,vp){
   await h.askQ("이 카드는 무슨 뜻이에요?",3);
   check((await page.locator("#chatlog .msg.ai .src").last().textContent()).includes("AI 답변"),"server OK answer should be tagged AI 답변");
   check((await page.textContent("#chathint")).includes("남은 질문 2개"),"an AI answer should use up a question");
-  await nav(page.locator("#screen .nav .btn",{hasText:"다시 뽑기"}));
+  await nav(page.locator("#screen .nav .btn",{hasText:"다시 뽑기"}));   // 한 번 묻고(확인) 다시 뽑기
   await atStep("s-draw");
+  check(h.dialogs.length>=1,"다시 뽑기 should ask before wiping the reading");
   await h.drawThree();
   check((await page.textContent("#chathint")).includes("남은 질문 2개"),"다시 뽑기 refilled the question count");
 
@@ -316,7 +337,7 @@ async function safetyRun(browser,vp){
   check(await page.evaluate(()=>loadCfg().aiOff===true),"AI off not saved");
   await page.locator("#sheet .btn",{hasText:"저장"}).click();
   check(await page.evaluate(()=>loadCfg().apiKey)==="sk-ant-typing","저장 did not store the new key");
-  await page.click("#sheet",{position:{x:5,y:5}});
+  check(await page.locator("#sheet").count()===0,"저장 should close the settings sheet");
   await nav(page.locator(".poster .start"));
   await atStep("s-color");
   await scr(" .rows .row").first().click();
@@ -328,6 +349,139 @@ async function safetyRun(browser,vp){
   await h.drawThree();
   check(await page.locator("#screen .chat").count()===0&&await page.locator("#q").count()===0,"chat shown although AI is off");
   check(await page.evaluate(()=>performance.getEntriesByType("resource").every(e=>!e.name.includes("anthropic.com")))&&api.calls.length===3,"AI call made although AI is off: "+api.calls.length);
+
+  await h.finish(label);
+  }finally{await h.ctx.close()}
+}
+
+/* 화면·창 점검 — 화면 크기마다 한 번 */
+async function uxRun(browser,vp){
+  const label=`${vp.width}x${vp.height} ux`,wide=vp.width>=900;
+  const h=await open(browser,vp);
+  const {page,scr,primary,atStep,nav}=h;
+  const overflow=()=>page.evaluate(()=>Math.max(0,document.scrollingElement.scrollHeight-innerHeight));
+  const scale=()=>page.evaluate(()=>{const m=(document.querySelector(".shell").style.transform||"").match(/scale\(([\d.]+)\)/);return m?+m[1]:1});
+  const fits=async where=>{if(wide){const o=await overflow();check(o<=1,`${where}: page scrolls by ${o}px on a wide screen`)}};
+  const cfg=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("maum_tarot_cfg")||"{}"));
+  const openSheet=async name=>{await page.click(".menubtn");await page.locator("#sheet .row",{hasText:name}).click();await page.waitForSelector("#sheet .sheetbox[role=dialog][aria-modal=true]")};
+  try{
+  // 1) 표지 그림이 늦게 와도 자리가 잡혀 있고 진짜 '시작하기' 버튼이 보임
+  let release;const held=new Promise(r=>release=r);
+  await h.ctx.route("**/cards/cover.jpg",async r=>{await held;return r.fallback()});
+  await page.goto(BASE.href,{waitUntil:"domcontentloaded"});
+  await page.waitForSelector(".poster .start");
+  const early=await page.evaluate(()=>{const p=document.querySelector(".poster").getBoundingClientRect(),b=document.querySelector(".poster .start"),r=b.getBoundingClientRect();
+    return {ratio:p.height/p.width,bw:r.width,bh:r.height,color:getComputedStyle(b).color,loaded:document.querySelector(".poster").classList.contains("loaded"),text:b.textContent}});
+  check(Math.abs(early.ratio-1.5)<.02&&early.bw>80&&early.bh>20&&!early.loaded&&early.text.includes("시작하기")&&!/rgba\(0, 0, 0, 0\)/.test(early.color),"cover not ready before its image: "+JSON.stringify(early));
+  release();
+  await page.waitForSelector(".poster.loaded",{timeout:8000});
+  await fits("cover");
+
+  // 2) 색 · 주제: aria-pressed, 넓은 화면은 스크롤 없음, 세운 태블릿·휴대폰은 축소 없음
+  await page.locator(".poster .start").click();
+  await atStep("s-color");
+  check(await primary().isDisabled()&&(await primary().textContent()).includes("골라"),"disabled 다음 should say what to do");
+  await scr(" .rows .row").nth(5).click();
+  check(await page.locator("#screen .row[aria-pressed=true]").count()===1,"selected color row lacks aria-pressed");
+  if(!wide)check(await scale()===1,"tablet/phone should not be scaled");
+  await fits("color");
+  await nav(primary());
+  await atStep("s-topic");
+  check(await page.evaluate(()=>document.activeElement&&document.activeElement.tagName==="H2"),"focus should move to the step heading");
+  await scr(" .rows .row").nth(1).click();
+  await fits("topic");
+  await nav(primary());
+  await atStep("s-draw");
+  check(await page.getAttribute("#status","aria-live")==="polite","#status should be a live region");
+  await page.waitForFunction(()=>!document.getElementById("fan").classList.contains("locked"),null,{timeout:5000});
+  await wait(500);
+  await fits("draw");
+
+  // 3) 부채꼴이 탁자 안에, 뒤집은 카드도 탁자 안에, 안내 글은 카드를 가리지 않음
+  const fanBox=await page.evaluate(()=>{const r=document.querySelector(".tarot-room").getBoundingClientRect();const cs=[...document.querySelectorAll("#fan .card")].map(c=>c.getBoundingClientRect());
+    return {l:Math.min(...cs.map(c=>c.left))-r.left,r:r.right-Math.max(...cs.map(c=>c.right))}});
+  check(fanBox.l>=-1&&fanBox.r>=-1,"fan cards stick out of the room: "+JSON.stringify(fanBox));
+  // 키보드로 고르기: Enter → 뒤집기, 끝나면 그 카드는 Tab 에서 빠지고 초점은 옆 카드로, 탁자는 스크롤되지 않음
+  await page.locator("#fan .card").nth(4).focus();
+  await page.keyboard.press("Enter");
+  await wait(1250);
+  const rev=await page.evaluate(()=>{const room=document.querySelector(".tarot-room").getBoundingClientRect(),c=document.querySelector("#fan .card.chosen").getBoundingClientRect(),st=document.getElementById("status").getBoundingClientRect();
+    return {top:c.top-room.top,bottom:room.bottom-c.bottom,stTop:st.top,cardBottom:c.bottom,revealing:document.querySelector(".tarot-room").classList.contains("revealing")}});
+  check(rev.top>=0&&rev.revealing&&rev.stTop>=rev.cardBottom-2,"revealed card clipped or covered by the status: "+JSON.stringify(rev));
+  await page.waitForFunction(()=>document.querySelectorAll("#slots .slot.filled").length===1&&!document.querySelector("#fan .card.chosen"),null,{timeout:6000});
+  const kb=await page.evaluate(()=>({t:document.querySelectorAll("#fan .card")[4].tabIndex,a:document.activeElement.classList.contains("card")&&!document.activeElement.classList.contains("hide"),s:document.querySelector(".tarot-room").scrollTop}));
+  check(kb.t===-1&&kb.a&&kb.s===0,"keyboard pick: "+JSON.stringify(kb));
+  await page.keyboard.press("Enter");   // 옆 카드로 옮겨 간 초점에서 바로 두 번째 카드
+  await page.waitForFunction(()=>document.querySelectorAll("#slots .slot.filled").length===2&&!document.querySelector("#fan .card.chosen"),null,{timeout:6000});
+  await page.locator("#fan .card:not(.hide)").first().dispatchEvent("click");
+  await page.waitForFunction(()=>document.querySelectorAll("#slots .slot.filled").length===3&&!document.querySelector("#fan .card.chosen"),null,{timeout:6000});
+  await wait(800);
+  await fits("draw after 3 cards");
+  await nav(page.locator("#go"));
+  await atStep("s-reading");
+
+  // 4) 리딩: 글씨가 15px 밑으로 줄지 않음, 대화는 role=log, 한글 조합 중 Enter 는 보내지 않음
+  const eff=await page.evaluate(()=>{const m=(document.querySelector(".shell").style.transform||"").match(/scale\(([\d.]+)\)/),s=m?+m[1]:1;
+    return {reading:parseFloat(getComputedStyle(document.querySelector(".reading p")).fontSize)*s,bubble:parseFloat(getComputedStyle(document.querySelector(".bubble")).fontSize)*s}});
+  if(vp.width>700)check(eff.reading>=14.9&&eff.bubble>=14.9,"reading text too small: "+JSON.stringify(eff));
+  check(await page.getAttribute("#chatlog","role")==="log","#chatlog should be role=log");
+  await page.fill("#q","한글 입력 중");
+  await page.dispatchEvent("#q","keydown",{key:"Enter",isComposing:true});
+  await wait(200);
+  check(await page.inputValue("#q")==="한글 입력 중"&&await page.locator("#chatlog .msg").count()===1,"Enter during IME composition sent the question");
+  // 다시 뽑기를 취소하면 리딩이 그대로
+  h.answer=false;
+  await nav(page.locator("#screen .nav .btn",{hasText:"다시 뽑기"}));
+  await wait(300);
+  check(await page.locator("#screen.s-reading").count()===1,"cancelled 다시 뽑기 still wiped the reading");
+  h.answer=true;
+  await nav(primary());
+  await atStep("s-scent");
+  await fits("scent");
+
+  // 5) 설정 창: 진짜 대화상자, '저장'이 창 안에서 눌림, Esc 로 닫히고 초점이 메뉴 버튼으로 돌아감
+  await openSheet("설정");
+  const sv=await page.evaluate(()=>{const box=document.querySelector("#sheet .sheetbox"),b=[...box.querySelectorAll(".btn")].find(x=>x.textContent.trim()==="저장");
+    b.scrollIntoView({block:"nearest"});const r=b.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    return {over:box.scrollWidth-box.clientWidth,hit:!!hit&&(hit===b||b.contains(hit)),inBox:r.right<=box.getBoundingClientRect().right}});
+  check(sv.over<=0&&sv.hit&&sv.inBox,"settings 저장 not reachable: "+JSON.stringify(sv));
+  check(await page.evaluate(()=>document.querySelector(".app").inert===true),"background should be inert while a sheet is open");
+  await page.keyboard.press("Escape");
+  check(await page.locator("#sheet").count()===0,"Escape did not close a clean sheet");
+  check(await page.evaluate(()=>document.activeElement&&document.activeElement.classList.contains("menubtn")),"focus not returned to the menu button");
+  // 고친 내용(새 키)이 있으면 바깥을 눌러도 닫히지 않고, 닫기는 물어봄(취소하면 그대로, 확인하면 저장 없이 닫힘)
+  await openSheet("설정");
+  await page.fill("#apikey","sk-ant-unsaved");
+  await page.mouse.click(4,4);
+  check(await page.locator("#sheet").count()===1,"backdrop click closed a sheet with unsaved changes");
+  h.answer=false;
+  const before=h.dialogs.length;
+  await page.keyboard.press("Escape");
+  check(h.dialogs.length===before+1&&await page.locator("#sheet").count()===1,"Escape on a dirty sheet should ask and stay open when cancelled");
+  h.answer=true;
+  await page.locator("#sheet .btn",{hasText:"닫기"}).click();
+  check(await page.locator("#sheet").count()===0&&!(await cfg()).apiKey,"닫기 after confirm should close without saving the key");
+  // Tab 은 창 안에서만 돔
+  await openSheet("도움말");
+  for(let i=0;i<4;i++)await page.keyboard.press("Tab");
+  check(await page.evaluate(()=>document.getElementById("sheet").contains(document.activeElement)),"Tab left the dialog");
+  await page.keyboard.press("Escape");
+
+  // 6) 향기 목록: '기본값으로'는 저장을 눌러야 적용, 닫기를 누르면 원래 목록 그대로
+  await page.evaluate(()=>localStorage.setItem("maum_tarot_cfg",JSON.stringify({scents:[{name:"테스트향",mood:"calm",desc:""}]})));
+  await openSheet("향기 목록");
+  check(await page.locator("#scentedit .srow").count()===1,"custom scent list not loaded");
+  const sb=await page.evaluate(()=>{const box=document.querySelector("#sheet .sheetbox");return box.scrollWidth-box.clientWidth});
+  check(sb<=0,"scent editor overflows sideways by "+sb);
+  await page.locator("#sheet .btn",{hasText:"기본값으로"}).click();
+  check(await page.locator("#scentedit .srow").count()===CONTENT.DEFAULT_SCENTS.length,"기본값으로 did not fill the editor");
+  check(((await cfg()).scents||[]).length===1,"기본값으로 changed the saved list before 저장");
+  await page.locator("#sheet .btn",{hasText:"닫기"}).click();
+  check(await page.locator("#sheet").count()===0&&((await cfg()).scents||[]).length===1,"닫기 after 기본값으로 lost the custom list");
+  await openSheet("향기 목록");
+  await page.locator("#sheet .btn",{hasText:"기본값으로"}).click();
+  await page.locator("#sheet .btn",{hasText:"저장"}).click();
+  check(await page.locator("#sheet").count()===0&&(await cfg()).scents===null,"기본값으로 + 저장 should store the default list (null)");
 
   await h.finish(label);
   }finally{await h.ctx.close()}
@@ -345,7 +499,11 @@ async function safetyRun(browser,vp){
       try{await safetyRun(browser,vp)}
       catch(e){failed++;console.log(`FAIL ${vp.width}x${vp.height} safety: ${e.message}`)}
     }
+    for(const vp of UX_VIEWPORTS){
+      try{await uxRun(browser,vp)}
+      catch(e){failed++;console.log(`FAIL ${vp.width}x${vp.height} ux: ${e.message}`)}
+    }
   }finally{await browser.close()}
-  console.log(failed?`${failed} run(s) failed`:`all ${VIEWPORTS.length*(RUNS+1)} runs passed (${BASE.href})`);
+  console.log(failed?`${failed} run(s) failed`:`all ${VIEWPORTS.length*(RUNS+1)+UX_VIEWPORTS.length} runs passed (${BASE.href})`);
   process.exit(failed?1:0);
 })();
