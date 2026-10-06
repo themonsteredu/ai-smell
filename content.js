@@ -182,7 +182,18 @@ const DEFAULT_SCENTS=[
   {name:"베르가못",mood:"balance",desc:"밝음과 차분함이 섞인 과일 향기"}
 ];
 
-const CONTENT={COVER,BACK,HERO,COVER_TITLE,topics,colors,roles,COLOR_MEANING,TOPIC_HOOK,ROLE_TAIL,cards,deckPool,MOODS,MOOD_DESC,SCENT_MOOD,DEFAULT_SCENTS};
+/* 향기 카드 아래에 붙는 '맡으면서 생각해 볼 질문' — AI가 질문을 만들지 못했을 때 향기 순서대로 하나씩 나와요 */
+const SMELL_QUESTIONS=[
+  "이 향기를 맡으면 어떤 장소가 떠오르나요?",
+  "이 향기는 지금 내 마음과 닮았나요?",
+  "이 향기에 어울리는 색은 무엇일까요?"
+];
+
+/* '더 물어보기' 위의 질문 버튼 — 누르면 바로 물어봐요. AI가 카드에 맞춘 질문을 만들면 그 질문이 먼저 나와요.
+   AI가 없을 때도 준비된 답변이 이 질문들에 맞춰 답해요(25자 안쪽으로 짧게) */
+const CHAT_CHIPS=["이 카드는 무슨 뜻이에요?","역방향은 나쁜 건가요?","오늘 해 볼 작은 행동은?"];
+
+const CONTENT={COVER,BACK,HERO,COVER_TITLE,topics,colors,roles,COLOR_MEANING,TOPIC_HOOK,ROLE_TAIL,cards,deckPool,MOODS,MOOD_DESC,SCENT_MOOD,DEFAULT_SCENTS,SMELL_QUESTIONS,CHAT_CHIPS};
 if(typeof module==="object"&&module.exports)module.exports=CONTENT;
 if(typeof window!=="undefined")window.CONTENT=CONTENT;
 })();
