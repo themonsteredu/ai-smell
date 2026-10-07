@@ -151,10 +151,10 @@ test("local answers depend on the question and rotate, and use the drawn cards",
   assert.equal(new Set(same).size,3,"same question should rotate");
   assert.ok(R.localAnswer("역방향은 나쁜 건가요?",0,s).includes("컵 8"),"reversed answer names the reversed card");
   const lit=ko=>card(ko).notLiteral.replace(/^이 카드는 /,"");
-  assert.ok(R.localAnswer("죽음 카드 무서워요",0,s).startsWith("죽음은 "+lit("죽음")),"scary answer names the card and uses its not-literal note");
+  assert.ok(R.localAnswer("죽음 카드 무서워요",0,s).startsWith("죽음 카드는 "+lit("죽음")),"scary answer names the card and uses its not-literal note");
   // 물어본 카드의 안심 문장 — 죽음이 먼저 뽑혀 있어도 탑을 물으면 탑
   const scary={draw:[card("죽음"),card("탑"),card("교황")],topic:"가족",scents:[]};
-  for(const q of ["탑 카드 무서워요","탑이 무서워요"])assert.ok(R.localAnswer(q,0,scary).startsWith("탑은 "+lit("탑")),q);
+  for(const q of ["탑 카드 무서워요","탑이 무서워요"])assert.ok(R.localAnswer(q,0,scary).startsWith("탑 카드는 "+lit("탑")),q);
   // 그림 이야기의 '나라면?' 질문(이걸 물어볼래요)은 그 카드를 두고 답함 — 거꾸로·방법 같은 낱말이 있어도
   for(const d of [card("매달린 사람"),card("죽음",true),card("교황")]){
     const st={draw:[d,card("컵 2"),card("열쇠")],topic:"가족",scents:[]};
@@ -164,11 +164,11 @@ test("local answers depend on the question and rotate, and use the drawn cards",
     }
   }
   // 앞일을 묻는 질문에는 카드가 미래를 맞히지 않는다고 답함
-  for(const q of ["시험 잘 볼 수 있을까요?","내일 좋은 일 생길까요?"])assert.ok(R.localAnswer(q,0,s).startsWith("카드는 미래를 맞히지 않아요"),q);
+  for(const q of ["시험 잘 볼 수 있을까요?","내일 좋은 일 생길까요?","내일 비 와요?"])assert.ok(R.localAnswer(q,0,s).startsWith("카드는 앞일을 맞히지 않아요"),q);
   // 내 이야기(가족·친구)에는 먼저 고맙다고 하고, 다른 주제의 한 줄을 붙이지 않음
   const mine=R.localAnswer("엄마한테 혼났어요",0,s);
   assert.ok(mine.startsWith("이야기해 줘서 고마워요")&&!mine.includes(C.TOPIC_HOOK["친구 관계"]),mine);
-  assert.ok(R.localAnswer("열쇠 카드는 무슨 뜻이에요?",0,s).startsWith("열쇠는"),"a named card is answered first");
+  assert.ok(R.localAnswer("열쇠 카드는 무슨 뜻이에요?",0,s).startsWith("열쇠 카드는"),"a named card is answered first");
   assert.ok(R.localAnswer("향기는요?",0,s).includes(s.scents[0].name),"scent answer names the scents");
   const up={draw:[card("바보"),card("컵 2"),card("정원")],topic:"가족",scents:[]};
   assert.ok(R.localAnswer("거꾸로 나오면 어때요?",0,up).includes("세 장 모두 똑바로"),"no reversed card case");
@@ -208,4 +208,78 @@ test("makeDeck(n): smaller phone fan, never more than FAN_MAX or the visible poo
   const d=R.makeDeck(15),draw=[];
   for(let i=0;i<3;i++)draw.push(R.drawOne(d,i,draw));
   assert.ok(draw.every(c=>!c.hidden));
+});
+
+test("local answers: sad family news is not tied to a card, and 죽음·탑 are never the default mirror",()=>{
+  const lit=card("죽음").notLiteral;
+  for(const draw of [[card("죽음"),card("컵 4",true),card("탑")],[card("바보"),card("힘"),card("죽음")]]){
+    const s={draw,topic:"가족",scents:[]};
+    for(const q of ["엄마가 많이 아파요","아빠가 병원에 입원했어요","엄마 아빠가 맨날 싸워요","부모님이 이혼했어요","엄마랑 아빠가 이혼할까요?","할머니가 돌아가셨어요"]){
+      const a=R.localAnswer(q,0,s);
+      assert.ok(a.includes("믿을 수 있는 어른")&&!/죽음|탑|컵 4|바보|힘/.test(a),q+" → "+a);
+      assert.ok(a.endsWith("이야기해 볼까요?"),"no extra closing line after the sad-news answer: "+a);
+    }
+    // 카드 이름을 묻지 않은 질문은 죽음·탑이 아닌 카드로 답함
+    for(const q of ["할머니가 나중에 어떻게 될까요?","친구랑 싸웠어요","이 카드는 무슨 뜻이에요?","어떻게 하면 될까요?","왜 이 카드가 나왔어요?"])
+      for(let n=0;n<3;n++){const a=R.localAnswer(q,n,s);assert.ok(!/죽음 카드|탑 카드/.test(a)&&!a.includes(lit),q+" → "+a)}
+  }
+  // 하나만 빼고 모두 죽음·탑이어도, 물어본 카드가 죽음이면 안심 문장을 붙임
+  const named=R.localAnswer("죽음 카드는 왜 나왔어요?",0,{draw:[card("죽음"),card("탑"),card("바보")],topic:"가족",scents:[]});
+  assert.ok(named.startsWith("죽음 카드는 "+lit.replace(/^이 카드는 /,"")),named);
+  const how=R.localAnswer("탑 카드를 보고 어떻게 하면 될까요?",0,{draw:[card("바보"),card("컵 2"),card("탑")],topic:"가족",scents:[]});
+  assert.ok(how.includes("탑 카드는")&&how.includes(card("탑").notLiteral),how);
+});
+
+test("local answers: '향' inside 영향·정방향·방향·향상 is not a scent question; a named scent is described",()=>{
+  const draw=[card("절제"),card("컵 6"),card("컵 8")];
+  const scents=C.DEFAULT_SCENTS.filter(x=>["레몬","라벤더","편백"].includes(x.name));
+  const s={draw,topic:"가족",scents};
+  for(const q of ["보이지 않는 영향은 뭐예요?","두 번째 카드의 영향이 뭐예요?","정방향은 무슨 뜻이에요?","앞으로 어떤 방향으로 가면 좋을까요?","성적이 향상될까요?"])
+    assert.ok(!R.localAnswer(q,0,s).startsWith("추천 향기"),q);
+  assert.ok(R.localAnswer("보이지 않는 영향은 뭐예요?",0,s).startsWith("‘보이지 않는 영향’ 자리에는 컵 6 카드가"));
+  for(const n of [0,1,2])assert.ok(R.localAnswer("향기는 왜 레몬이에요?",n,s).includes("레몬은 "+C.MOOD_DESC[scents.find(x=>x.name==="레몬").mood]),"names the asked scent");
+  assert.ok(R.localAnswer("라벤더는 어떤 향기예요?",0,s).includes("라벤더는 "));
+  assert.ok(!R.localAnswer("숨은 마음이 뭐예요?",0,s).includes("마음이 마음"),"no '마음이 마음' repetition");
+});
+
+test("local answers: card names that are everyday words only count with '카드', and a card that was not drawn is named as such",()=>{
+  const s={draw:[card("바보"),card("달"),card("힘",true)],topic:"나 자신",scents:[]};
+  for(const [q,w] of [["나는 바보 같아요","바보"],["친구가 저를 바보라고 놀려요","바보"],["나는 다른 애들이랑 달라요","달"],["달리기 시합에서 이길까요?","달"],["요즘 힘이 없어요","힘"]])
+    for(let n=0;n<3;n++)assert.ok(!R.localAnswer(q,n,s).includes(w+" 카드"),q+" → "+R.localAnswer(q,n,s));
+  assert.ok(R.localAnswer("바보 카드는 무슨 뜻이에요?",0,s).startsWith("바보 카드는 ‘새로운 시작’"));
+  assert.ok(R.localAnswer("힘 카드 역방향은 나쁜 거예요?",0,s).includes("힘 카드는 거꾸로 나와서"));
+  const other=R.localAnswer("힘 카드는 무슨 뜻이에요?",0,{draw:[card("죽음"),card("컵 4",true),card("탑")],topic:"가족",scents:[]});
+  assert.ok(other.startsWith("힘 카드는 이번에 뽑은 카드가 아니에요. 내가 뽑은 카드는 죽음, 컵 4, 탑이에요."),other);
+  for(const c of C.cards.filter(c=>c.hidden))assert.ok(!R.localAnswer(c.ko+" 카드는 무슨 뜻이에요?",0,s).includes(c.ko),"hidden card named: "+c.ko);
+});
+
+test("local answers: 'what should I do' and personal 'why' questions are routed to fitting answers",()=>{
+  const s={draw:[card("바보"),card("힘"),card("절제")],topic:"공부와 도전",scents:[]};
+  for(const q of ["어떻게 하면 될까요?","어떻게 해야 될까요?","뭘 해야 할까요?","앞으로 어떤 방향으로 가면 좋을까요?"]){
+    const a=R.localAnswer(q,0,s);
+    assert.ok(a.startsWith("‘앞으로 취할 태도’ 자리의 절제 카드는")&&!a.includes("앞일"),q+" → "+a);
+  }
+  for(const q of ["왜 나는 공부가 안 될까요?","왜 친구가 나를 싫어할까요?","나는 왜 이렇게 못생겼을까요"]){
+    const a=R.localAnswer(q,0,s);
+    assert.ok(a.startsWith("이야기해 줘서 고마워요")&&!a.includes("꼭 정해진 이유"),q+" → "+a);
+  }
+  assert.ok(R.localAnswer("왜 이 카드가 나왔어요?",0,s).startsWith("카드는 잘 섞은 뒤"));
+  for(const q of ["시험 잘 볼 수 있을까요?","할머니가 나중에 어떻게 될까요?"])assert.ok(!R.localAnswer(q,0,s).includes("그 일을"),"future answer has no dangling referent");
+});
+
+test("a heavy meaning in the '앞으로 취할 태도' slot is never framed as advice to adopt it",()=>{
+  const heavyAtt=C.ROLE_TAIL_HEAVY,plain=C.ROLE_TAIL[2];
+  for(const x of [card("여사제",true),card("은둔자",true),card("컵 5")]){
+    assert.ok(R.heavy(x),x.ko);
+    const draw=[card("바보"),card("컵 2"),x];
+    const last=strip(R.make({color:"초록",topic:"가족",draw,hasNote:false})).split("앞으로 취할 태도 — ")[1];
+    assert.ok(last.includes(heavyAtt)&&!plain.some(t=>last.includes(t)),x.ko+": "+last);
+    for(let n=0;n<3;n++){
+      const a=R.localAnswer(x.ko+" 카드는 무슨 뜻이에요?",n,{draw,topic:"가족",scents:[]});
+      assert.ok(!a.includes("앞으로 가져 볼 마음가짐"),a);
+    }
+  }
+  // 가벼운 카드는 예전처럼 자리 문장 가운데 하나
+  const light=strip(R.make({color:"초록",topic:"가족",draw:[card("바보"),card("컵 2"),card("절제")],hasNote:false})).split("앞으로 취할 태도 — ")[1];
+  assert.ok(plain.some(t=>light.includes(t))&&!light.includes(heavyAtt));
 });

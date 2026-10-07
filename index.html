@@ -831,16 +831,21 @@ function maskKey(k){return k.length>14?k.slice(0,7)+"…"+k.slice(-4):"…"}
    바로 저장되는 칸(AI 기능 끄기)은 data-instant 를 붙여 dirty 로 치지 않아요. */
 const appEl=document.querySelector(".app");
 let sheetOpener=null;
-/* 창이 열린 뒤 SHEET_GUARD ms 안의 클릭은 버림 — 두 번 누르기(더블클릭)의 두 번째 클릭이 새 창의 버튼(모델 고르기 등)을
-   누르거나 바깥(배경)을 눌러 창을 바로 닫지 않게 */
+/* 창이 열리거나 닫힌 직후, 도움 안내에서 이어서 하기·처음부터를 누른 직후 SHEET_GUARD ms 동안의 누르기는 모두 버림
+   (마우스 누름·클릭 둘 다 — 누름까지 막아야 입력칸에 초점이 가거나 고르기 칸이 펼쳐지지 않음).
+   두 번 누르기(더블클릭)의 두 번째가 새 창의 버튼(모델 고르기 등)을 누르거나, 창을 바로 닫거나,
+   닫힌 뒤 아래 화면(색·주제·카드·다른 카드의 그림 이야기)을 누르지 않게 */
 const SHEET_GUARD=350;
+let tapBlock=0;
+const holdTaps=()=>{tapBlock=Date.now()+SHEET_GUARD};
+["pointerdown","mousedown","click"].forEach(t=>document.addEventListener(t,e=>{if(Date.now()<tapBlock){e.preventDefault();e.stopImmediatePropagation()}},true));
 function sheet(inner,cls){   // cls: 창 모양을 바꿀 때(예: 그림 이야기 'story' — 조금 넓은 창)
   const old=document.getElementById("sheet");
   if(old)old.remove();else sheetOpener=document.activeElement;   // 창에서 창으로 넘어가면 처음 연 버튼을 기억
-  const d=document.createElement("div"),at=Date.now(),early=()=>Date.now()-at<SHEET_GUARD;
+  const d=document.createElement("div");
   d.className="sheet";d.id="sheet";
-  d.addEventListener("click",e=>{if(early()){e.preventDefault();e.stopImmediatePropagation()}},true);
-  d.onclick=e=>{if(e.target===d&&!d.dataset.dirty&&!early())closeSheet()};
+  holdTaps();
+  d.onclick=e=>{if(e.target===d&&!d.dataset.dirty)closeSheet()};
   d.innerHTML=`<div class="sheetbox${cls?" "+cls:""}" role="dialog" aria-modal="true" tabindex="-1">${inner}</div>`;
   const box=d.firstElementChild,h=box.querySelector("h3");
   if(h){h.id="sheettitle";box.setAttribute("aria-labelledby","sheettitle")}
@@ -860,7 +865,7 @@ function closeSheet(force){
   if(!d)return true;
   if(force!==true&&d.dataset.dirty&&!confirm("저장하지 않은 내용이 있어요. 저장하지 않고 닫을까요?"))return false;
   if(ttsBtn&&d.contains(ttsBtn))stopSpeak();   // 창 안에서 읽어 주던 글(그림 이야기)은 창을 닫으면 멈춤
-  d.remove();appEl.inert=false;
+  d.remove();appEl.inert=false;holdTaps();
   const o=sheetOpener;sheetOpener=null;
   if(o&&o.isConnected&&o!==document.body&&!state.flag)o.focus({preventScroll:true});
   return true;
@@ -902,7 +907,7 @@ function help(){
     <div class="notice teach-help">
       <b>선생님께 — 진행 요령</b><br>
       · 학생은 카드만 고르고, 카드의 뜻은 고르지 않아요. 정방향·역방향은 카드를 뒤집을 때 정해져요.<br>
-      · 감정 색은 리딩의 결론이 아니라 배경이에요. 준비된 풀이에는 색의 두 가지 쪽이 함께 나와요(예: 빨강 = 화가 났거나, 힘이 넘치거나). AI 풀이는 마지막 '세 카드의 흐름'에서 색과 이어 줘요.<br>
+      · 감정 색은 리딩의 결론이 아니라 배경이에요. 준비된 풀이는 색의 뜻을 '~일 수 있어요'처럼 열어 두고, 빨강·파랑·보라·회색은 두 가지 쪽을 함께 말해요(예: 빨강 = 화가 났거나, 힘이 넘치거나). AI 풀이는 마지막 '세 카드의 흐름'에서 색과 이어 줘요.<br>
       · 리딩 위에 '타로 카드는 미래를 맞히는 게 아니에요' 안내가 붙고, 죽음·탑 카드에는 '실제로 나쁜 일이 생긴다는 뜻이 아니에요'라는 문장이 함께 나와요.<br>
       · 2단계의 한 줄 메모는 리딩에 다시 나오지 않고, 저장하거나 AI에게 보내지 않아요.<br>
       · 다시 뽑기를 해도 남은 질문 수는 다시 채워지지 않아요(같은 학생으로 봐요). 리딩·대화가 있을 때 다시 뽑기·처음부터를 누르면 지우기 전에 한 번 더 물어봐요.<br>
@@ -932,8 +937,8 @@ function help(){
       · '더 물어보기'에서 학생은 AI에게 세 번까지 물어볼 수 있어요(질문 버튼을 눌러도 바로 물어봐요). AI의 답도 글자가 바로바로 나타나요. AI가 답하지 못할 때(키 없음·한도·연결 문제)는 질문 속 낱말에 맞춰 고른 '준비된 답변'이 나오고, 이때는 남은 질문 수가 줄지 않아요. AI를 쓸 수 없는 기기(키가 없고 서버에도 키가 없음)에서는 남은 질문 수를 보여 주지 않아요.<br>
       · 질문 칸 위에 '질문은 AI에게 보내져요 · 이름·학교·전화번호는 쓰지 마세요' 안내가 늘 보이고, 답마다 'AI 답변'·'준비된 답변' 표시가 붙어요.<br>
       · '더 물어보기'로 AI에게 보내는 것은 학생이 쓴 질문과 카드 이름·주제·감정 색, 그리고 화면의 리딩 글이에요. 질문 속 전화번호·이메일·긴 숫자는 가려서 보내요.<br>
-      · 요금(대략): 학생 1명(AI 리딩 + 질문 3개)에 하이쿠 약 ${won(HAIKU)}원, 소넷 약 ${won(SONNET)}원이에요. 같은 안내문을 되풀이해 보내는 부분은 AI 쪽에서 저장해 두었다 싸게 다시 쓰기도 해요(프롬프트 캐싱). 소넷은 드물게 답을 거절하면 Anthropic이 다른 모델로 다시 써 주게 해 두었어요.<br>
-      · 보내는 곳: 설정에 키를 넣은 기기는 그 기기에서 바로 Anthropic(미국)으로 보내요. 키가 없는 기기는 이 사이트의 서버(Vercel, 미국)를 거치는데, 서버에 키가 없으면 AI를 부르지 않고 준비된 답변을 보여 줘요.<br>
+      · 요금(대략): 학생 1명(AI 리딩 + 질문 3개)에 하이쿠 약 ${won(HAIKU)}원, 소넷 약 ${won(SONNET)}원이에요. 같은 안내문을 되풀이해 보내는 부분은 AI 쪽에서 저장해 두었다 싸게 다시 쓰기도 해요(프롬프트 캐싱). 소넷은 일부 종류의 거절(보안 관련 등)에서만 Anthropic이 다른 모델로 다시 써 줘요. 그 밖의 거절은 준비된 풀이·답변으로 바뀌어요.<br>
+      · 보내는 곳: 설정에 키를 넣은 기기는 그 기기에서 바로 Anthropic(미국)으로 보내요. 키가 없는 기기는 이 사이트의 서버(Vercel, 미국)를 거치는데, 서버에 키가 없으면 AI를 부르지 않고 준비된 답변을 보여 줘요. 키를 넣은 기기도 '더 물어보기'에서 AI가 답하지 못하면 같은 질문과 카드 정보로 이 서버에 한 번 더 물어봐요.<br>
       · 앱은 질문과 답을 저장하지 않아요. Anthropic은 API로 받은 내용을 기본적으로 AI 학습에 쓰지 않는다고 밝히고 있어요.<br>
       · 보호자 동의를 받지 않은 반에서는 설정 → <b>AI 기능 끄기</b>를 체크해 주세요. AI 리딩과 '더 물어보기'가 사라지고(앱에 들어 있는 풀이만 나와요) AI를 전혀 부르지 않아요. AI가 리딩을 쓰는 중에 체크해도 바로 멈추고 준비된 풀이로 바뀌어요.<br>
       · 가정 안내문 예시: "타로 활동 중 학생이 고른 감정 색·주제·카드와 카드에 대해 묻는 질문은 리딩과 답을 만들기 위해 AI(Anthropic, 미국)에 보내지며, 학원은 그 내용을 저장하지 않습니다. 원하지 않으시면 AI 질문 없이 진행합니다."
@@ -941,7 +946,7 @@ function help(){
     <div class="notice teach-help">
       <b>선생님께 — 도움 안내 화면</b><br>
       · 고민 한 줄이나 질문에 죽고 싶다·맞는다·괴롭힘 같은 말이 보이면, 카드 풀이 대신 상담 번호(1388·109·117·112)가 있는 도움 안내 화면이 떠요. 인터넷이 없어도 기기 안에서 바로 확인하고, 그 글은 AI에게 보내지 않아요. AI가 위험한 이야기라고 판단한 경우에도 같은 화면이 떠요.<br>
-      · 이 화면에서는 학생이 다시 뽑기·처음부터로 나갈 수 없어요. 새로고침해도 이 화면이 다시 떠요. 학생과 이야기를 나눈 뒤 <b>'선생님 확인' 버튼을 1.5초 동안 길게 누르면</b> 이어서 하기·처음부터를 고를 수 있어요.<br>
+      · 이 화면에서는 학생이 다시 뽑기·처음부터로 나갈 수 없어요. 새로고침하거나 창(탭)을 닫았다 다시 열어도, 같은 기기의 다른 창에서도 이 화면이 다시 떠요. 학생과 이야기를 나눈 뒤 <b>'선생님 확인' 버튼을 1.5초 동안 길게 누르면</b> 이어서 하기·처음부터를 고를 수 있어요.<br>
       · 맨 위 가운데의 ☾ ✦ ☽ 표시가 <b>붉은색</b>이 되면 도움 안내 화면이 떠 있거나, 아직 확인하지 않은 도움 안내 기록이 있다는 뜻이에요. '선생님 확인'을 눌러도, 새로고침해도 붉은색은 남아요. ☰ 메뉴 → 설정에서 기록을 보고 <b>'확인했어요'를 1.5초 동안 길게 누르면</b> 원래 색으로 돌아와요. 기록에는 시각만 남고 학생이 쓴 글은 남지 않아요.
     </div>
     <div class="nav"><button class="btn primary" onclick="closeSheet()">닫기</button></div>`);
@@ -1041,7 +1046,9 @@ async function testKey(){
   showKeyState("확인하는 중…");
   const r=await callClaude(k,loadCfg().model,{messages:[{role:"user",content:"안녕"}],max_tokens:10});
   if(!i.isConnected)return;   // 기다리는 사이 설정 창을 닫았으면(저장하지 않고 닫기) 아무것도 저장하지 않음
-  if(r.ok){if(typed&&i.value.trim()===typed){saveCfg({apiKey:typed});i.value="";markDirty(false)}showKeyState("연결됐어요 · 정상","ok")}
+  // 기다리는 사이 입력칸의 키를 바꿨으면, 확인하지 않은 키 옆에 '정상'을 띄우지 않음
+  if(i.value.trim()!==typed){showKeyState("입력한 키가 바뀌었어요. 다시 연결 확인을 눌러 주세요.");return}
+  if(r.ok){if(typed){saveCfg({apiKey:typed});i.value="";markDirty(false)}showKeyState("연결됐어요 · 정상","ok")}
   else showKeyState("연결 실패 · "+(r.error||"확인 필요"),"bad");
 }
 
@@ -1406,8 +1413,9 @@ function scentScreen(){
 /* ══════════════ AI 부르기 ══════════════
    설정에 넣은 이 기기의 키로 Anthropic 에 바로 보냅니다(원장님이 고른 방식). 안내문(프롬프트)은 prompts.js 에 있어요.
    - 하이쿠 4.5: thinking 을 보내지 않음
-   - 소넷 5.5: thinking:{type:'between_tools'}(생각 끄기) + AI가 답을 거절하면 Anthropic 이 다른 모델로 다시 써 주는
-     fallbacks:'default'(베타 머리글 필요). 이 요청이 400 이면 베타 머리글·fallbacks 만 빼고 한 번 더 보냄(브라우저·요금제 차이 대비) */
+   - 소넷 5.5: thinking:{type:'between_tools'}(생각 끄기) + fallbacks:'default'(베타 머리글 필요) — 일부 종류의 거절(보안 관련 등)만
+     Anthropic 이 다른 모델로 다시 써 주고, 그 밖의 거절(refusal)은 준비된 풀이·답변으로 바뀜.
+     이 요청이 400 이면 베타 머리글·fallbacks 만 빼고 한 번 더 보냄(브라우저·요금제 차이 대비) */
 const API_URL="https://api.anthropic.com/v1/messages";
 const FALLBACK_BETA="server-side-fallback-2026-07-01";
 /* 글자가 오는 답(스트리밍): 첫 글자가 8초 안에 안 오거나 다 받는 데 30초가 넘으면 끊음 */
@@ -1423,7 +1431,8 @@ function stopAi(){aiCtls.forEach(c=>c.abort());aiCtls=[]}
 const aiOn=()=>{const c=loadCfg();return !!c.apiKey&&!c.aiOff};
 
 /* 베타 머리글·fallbacks 를 한 번 거절당하면(400, 또는 연결 오류 뒤 빼고 보낸 게 됨) 이 페이지에서는 다시 붙이지 않음
-   — 질문마다 실패하는 요청을 한 번씩 더 보내 첫 글자가 늦어지지 않게 */
+   — 질문마다 실패하는 요청을 한 번씩 더 보내 첫 글자가 늦어지지 않게.
+   빼고 보낸 요청도 400 이면(크레딧 부족처럼 베타와 상관없는 오류) 그대로 둠 — 크레딧을 채운 뒤에는 다시 붙여 보냄 */
 let noBeta=false;
 async function claudeFetch(key,model,body,signal){
   const m=normModel(model),sonnet=m===SONNET;   // 허용된 두 모델(하이쿠·소넷)만 보냄
@@ -1435,17 +1444,24 @@ async function claudeFetch(key,model,body,signal){
   try{const r=await send(true);if(r.status!==400)return r}
   catch(e){if(signal.aborted)throw e}   // 브라우저가 베타 머리글을 못 보낸 경우(연결 오류)도 한 번 더
   const r=await send(false);
-  noBeta=true;
+  if(r.status!==400)noBeta=true;
   return r;
 }
-const httpMsg=s=>s===401?"키가 올바르지 않아요":s===429?"요청이 너무 잦아요":s===400?"요청 형식 오류":"오류 "+s;
+/* 오류 답의 까닭(연결 확인에 보임). 크레딧(잔액) 부족도 400 으로 오므로 오류 글을 보고 가려냄 */
+async function httpMsg(r){
+  let m="";
+  try{const d=await r.json();m=String(d&&d.error&&d.error.message||"")}catch(e){}
+  if(/credit|billing|spend/i.test(m))return "크레딧(잔액)이 부족해요 · console.anthropic.com → Billing";
+  const s=r.status;
+  return s===401?"키가 올바르지 않아요":s===429?"요청이 너무 잦아요":s===400?"요청 형식 오류":"오류 "+s;
+}
 
 /* 한 번에 받는 답 → {ok, text, stop, error}. stop(stop_reason: end_turn·max_tokens·refusal…)은 부른 쪽이 확인 */
 async function callClaude(key,model,{system,messages,max_tokens},ctl=new AbortController()){
   const t=setTimeout(()=>ctl.abort(),15000);
   try{
     const r=await claudeFetch(key,model,{max_tokens,...(system?{system}:{}),messages},ctl.signal);
-    if(!r.ok)return {ok:false,error:httpMsg(r.status)};
+    if(!r.ok)return {ok:false,error:await httpMsg(r)};
     const d=await r.json();
     const text=(d.content||[]).filter(b=>b&&b.type==="text").map(b=>b.text).join("\n").trim();
     return text?{ok:true,text,stop:d.stop_reason}:{ok:false,error:"빈 응답"};
@@ -1499,14 +1515,9 @@ let aiRead=null,extras=null;
 const cardsOf=()=>state.draw.map(d=>({ko:d.ko,rev:!!d.rev}));
 /* 안내문(system)은 학생마다 똑같아 AI 쪽에 저장해 두었다 싸게 다시 씀(프롬프트 캐싱 — 너무 짧으면 그냥 저장되지 않음) */
 const cached=text=>[{type:"text",text,cache_control:{type:"ephemeral"}}];
-/* 글 끝에 [도움필요] 표시가 오는 중일 수 있으면('[', '[도' …) 그 끝은 아직 보여 주지 않음.
-   답 맨 앞의 괄호 없는 '도움필요'도 같은 식으로 기다림. 표시가 다 오면 Safety.hasMarker 가 잡아 도움 안내로 */
-function markerHold(t){
-  const lead=t.replace(/[\s*#_>]+/g,"");
-  if(lead.length<=4&&"도움필요".startsWith(lead))return "";
-  for(let k=Math.min(t.length,12);k>0;k--){const s=t.slice(-k).replace(/\s+/g,"");if(s&&Safety.MARKER.startsWith(s))return t.slice(0,-k)}
-  return t;
-}
+/* 글자가 오는 동안 화면에 넣는 글은 Safety.holdMarker 를 거침 — 글 끝에 [도움필요] 표시가 오는 중이면('[', '【도' …)
+   또는 답 맨 앞의 괄호 없는 '도움필요'('"도움' …)가 오는 중이면 그 부분은 아직 보여 주지 않음.
+   표시가 다 오면 Safety.hasMarker 가 잡아 도움 안내로 */
 async function startAiReading(){
   if(!aiOn()||state.draw.length!==3||(aiRead&&aiRead.g===gen))return;
   const g=gen,a=aiRead={g,text:"",st:"run"},cfg=loadCfg(),cards=cardsOf();
@@ -1518,8 +1529,8 @@ async function startAiReading(){
     t=>{
       if(g!==gen)return false;
       if(Safety.hasMarker(t)){help=true;return false}
-      if(Prompts.badSoFar(t))return false;   // 단정·진단하는 말이 보이면 더 보여 주지 않고 바로 준비된 풀이로
-      a.text=markerHold(t);paintReading();
+      if(Prompts.badReading(t))return false;   // 단정·진단하는 말이 보이면 더 보여 주지 않고 바로 준비된 풀이로
+      a.text=Safety.holdMarker(t);paintReading();
     },aiCtl());
   if(g!==gen||a!==aiRead)return;   // 다음 학생이거나, 그사이 'AI 기능 끄기'로 버려진 리딩
   const secs=Prompts.parseReading(r.text);
@@ -1688,7 +1699,7 @@ async function ask(preset){
       txt=>{
         if(g!==gen)return false;
         if(Safety.hasMarker(txt)){danger=true;return false}
-        const shown=markerHold(txt);
+        const shown=Safety.holdMarker(txt);
         if(shown.trim())liveBubble(shown);
       },aiCtl());
     if(g!==gen)return;
@@ -1718,7 +1729,7 @@ async function ask(preset){
   if(answer){
     // 대화 흐름 기억 — AI가 실제로 답한 질문·답만(카드 정보는 보낼 때 Prompts 가 붙임). 남은 질문 수도 AI 답만 셈
     chatHistory.push({role:"user",content:q},{role:"assistant",content:answer});
-    askCount++;updateHint();
+    askCount++;updateHint();storyAskSync();
     down=false;
   }else{   // 5) 그래도 없으면 질문에 맞춰 고른 준비된 답변(남은 질문 수는 줄지 않음)
     answer=Reading.localAnswer(q,chatLog.filter(m=>m.src==="local").length,{draw:state.draw,topic:state.topic,scents:state.scents});src="local";
@@ -1745,9 +1756,10 @@ async function ask(preset){
 /* ══════════════ 도움 안내 (위험한 말이 보였을 때) ══════════════
    고민 한 줄·질문에서 safety.js 가 위험한 말을 찾거나, AI가 [도움필요]로 답하면 이 화면으로 바뀝니다.
    학생은 여기서 나갈 수 없고, 선생님이 '선생님 확인'을 1.5초 길게 누르면 이어서 하기·처음부터를 고를 수 있어요. */
-/* 도움 안내가 떠 있다는 표시만(글 없이) 이 탭의 sessionStorage 에 둠 — 새로고침해도 선생님 확인 전에는 도움 안내가 다시 뜸 */
+/* 도움 안내가 떠 있다는 표시만(글 없이, 뜬 시각만) 이 기기의 localStorage 에 둠 — 새로고침하거나 창(탭)을 닫았다 다시 열어도,
+   같은 기기의 다른 창에서도 선생님 확인 전에는 도움 안내가 다시 뜸 */
 const HELP_KEY="maum_tarot_help";
-function helpMark(on){try{if(on)sessionStorage.setItem(HELP_KEY,"1");else sessionStorage.removeItem(HELP_KEY)}catch(e){}}
+function helpMark(on){try{if(on)localStorage.setItem(HELP_KEY,String(Date.now()));else localStorage.removeItem(HELP_KEY)}catch(e){}}
 function raiseFlag(cat,from){
   state.flag={cat,from};
   helpMark(true);
@@ -1799,6 +1811,7 @@ function endFlag(reset){
   if(!state.flag)return;
   const from=state.flag.from;
   state.flag=null;helpMark(false);
+  holdTaps();   // 두 번 누른 두 번째가 새로 그려진 화면(색·주제 줄 등)을 누르지 않게
   if(reset){navAt=0;restart(true);return}
   if(from==="note")state.note="";
   render();
@@ -1930,11 +1943,12 @@ function addSpeak(msg){
 /* ── 카드 그림 이야기 ── 리딩 결과의 카드를 누르면 큰 그림 · 그림 속 이야기(story) · 눌러 보는 상징(look) · '나라면?'(ask).
    '이걸 물어볼래요'는 창을 닫고 질문 칸에 넣기만 함(보내지 않음 — 보낼 때 안전 확인·남은 질문 수는 ask() 가 그대로) */
 function cardKey(e,i){if(e.key==="Enter"||e.key===" "){e.preventDefault();cardInfo(i)}}
+const ASK_DONE="오늘 AI 질문은 다 썼어요. 선생님·친구와 이야기해 봐요.";
 function cardInfo(i){
   const d=state.draw[i];
   if(!d||state.flag)return;
   const look=d.look||[],chat=!!document.getElementById("q"),left=askCount<ASK_LIMIT;
-  const askHint=!chat?"마음속으로 답해 보거나, 선생님·친구와 이야기해 봐요.":!left?"오늘 AI 질문은 다 썼어요. 선생님·친구와 이야기해 봐요.":"";
+  const askHint=!chat?"마음속으로 답해 보거나, 선생님·친구와 이야기해 봐요.":!left?ASK_DONE:"";
   sheet(`<h3>${esc(d.ko)}</h3>
     <p class="storysub">${i+1}. ${roles[i]} · ${d.rev?"역방향":"정방향"}</p>
     <div class="storybox">${img(d,d.rev?'class="rev"':"")}
@@ -1956,9 +1970,15 @@ function lookToggle(b){
   const m=document.getElementById(b.getAttribute("aria-controls")),on=b.getAttribute("aria-expanded")!=="true";
   b.setAttribute("aria-expanded",on);m.hidden=!on;
 }
+/* 그림 이야기 창이 열린 사이 마지막 AI 질문의 답이 오면 '이걸 물어볼래요'를 안내 글로 바꿈(눌러도 아무 일 없는 버튼이 남지 않게) */
+function storyAskSync(){
+  const b=document.querySelector("#sheet .askbox .btn");
+  if(b&&askCount>=ASK_LIMIT){const p=document.createElement("p");p.className="askhint";p.textContent=ASK_DONE;b.replaceWith(p)}
+}
 function askThis(i){
   const d=state.draw[i],q=document.getElementById("q");
-  if(!d||!q||askCount>=ASK_LIMIT)return;
+  if(askCount>=ASK_LIMIT){storyAskSync();return}
+  if(!d||!q)return;
   closeSheet(true);
   q.value=`${d.ko} 카드: ${d.ask}`;   // 어느 카드의 질문인지 AI와 준비된 답변이 알 수 있게
   q.dispatchEvent(new Event("input"));   // 질문 칸 높이를 글에 맞춤
@@ -1967,8 +1987,10 @@ function askThis(i){
 }
 
 paintTools();
-// 도움 안내가 떠 있던 탭을 새로고침했으면(앞 학생의 글·카드는 남기지 않고) 도움 안내만 다시 — 기록은 더 남기지 않음
-try{if(sessionStorage.getItem(HELP_KEY))state.flag={cat:"reload",from:"reload"}}catch(e){}
+// 도움 안내가 떠 있던 채로 새로고침하거나 다시 열었으면(앞 학생의 글·카드는 남기지 않고) 도움 안내만 다시 — 기록은 더 남기지 않음
+try{if(localStorage.getItem(HELP_KEY))state.flag={cat:"reload",from:"reload"}}catch(e){}
+// 같은 기기의 다른 창에서 도움 안내가 뜨면 이 창도 도움 안내로(학생이 열어 둔 다른 창으로 넘어가 계속하지 않게)
+addEventListener("storage",e=>{if(e.key===HELP_KEY&&e.newValue&&!state.flag){state.flag={cat:"reload",from:"reload"};closeSheet(true);render()}});
 render();
 
 /* ── 화면 맞춤 ──────────────────────────────

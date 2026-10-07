@@ -13,7 +13,8 @@
      refusal · maxTokens   네 부분이 다 와도 stop_reason 이 refusal·max_tokens → 준비된 풀이(앞서 보인 글은 사라짐)
      marker   리딩 답에 [도움필요] → 도움 안내 + 붉은 표시(그동안 화면을 돌려도 오류 없음, 선생님 확인 뒤에도 붉은 표시는 남음),
               이어서 하기 뒤 대화 답의 [도움필요]도 도움 안내(질문은 기록에서 지움) · 새로고침해도 도움 안내가 다시 뜸
-     midmarker  리딩 중간에 '[도' … '움필요]'로 나뉘어 온 표시는 한 글자도 보이지 않음 · 대화 답 맨 앞의 괄호 없는 '도움필요'도 도움 안내
+     midmarker  리딩 중간에 '【도' … '움필요】'로 나뉘어 온 표시(괄호 모양이 달라도)는 한 글자도 보이지 않음 ·
+              대화 답 맨 앞의 괄호 없는 '"도움필요'도 도움 안내(오는 중에 '"도움'도 보이지 않음)
      aioff    리딩이 오는 중에 질문 → 화면에 보이는 AI 글을 함께 보냄(준비된 풀이가 아니라) · 안내문 캐싱 표시 ·
               그 뒤 'AI 기능 끄기' → 리딩 요청이 끊기고 준비된 풀이(표시 없음), 정리 요청 없음
      slow     8초 넘게 첫 글자가 없음 → 기다림 표시 뒤 준비된 풀이(늦게 온 답은 무시)
@@ -21,6 +22,8 @@
      sonnet   소넷: thinking between_tools + fallbacks:'default' + 베타 머리글, 400 이면 둘만 빼고 한 번 더(중간 fallback 블록도 읽음),
               한 번 400 을 받은 뒤의 정리·대화는 처음부터 베타 없이(실패할 요청을 또 보내지 않음)
      nokey    키 없음: AI 요청 0번, 표시 없음, 기본 질문 버튼 → 준비된 답변, 남은 질문 수는 보이지 않음
+     settings 연결 확인: 크레딧 부족(400)은 '크레딧' 안내 + 소넷 베타를 끄지 않음 · 기다리는 사이 키를 바꾸면 '정상'도 저장도 없음
+     storyask 그림 이야기 창이 열린 사이 마지막 AI 답이 오면 '이걸 물어볼래요'가 안내 글로 바뀜
      total    30초 안에 끝 표시가 없음: 네 부분이 다 왔으면 그대로 두고, 덜 왔으면 준비된 풀이(두 장면)
    - 모든 요청 본문에 학생의 한 줄 메모가 없어야 하고, pageerror·console error 가 없어야 합니다. */
 let pw;
@@ -476,10 +479,10 @@ const SCENES={
     const h=await open(browser,"midmarker",{cfg:HAIKU_CFG,handler:call=>{
       if(call.kind==="reading"){
         const first=readingFor(call,"앞글",1)+"\n";
-        // 첫 부분 + '[도' → 700ms 뒤 '움필요] …' (리딩 화면이 열린 뒤에 오도록 천천히)
-        return {sse:sse(first+"[도움필요] 말해 줘서 고마워요.",{n:first.length+2}),gap:700};
+        // 첫 부분 + '【도' → 700ms 뒤 '움필요】 …' (리딩 화면이 열린 뒤에 오도록 천천히). 대괄호가 아닌 괄호도 숨겨야 함
+        return {sse:sse(first+"【도움필요】 말해 줘서 고마워요.",{n:first.length+2}),gap:700};
       }
-      if(call.kind==="chat")return {sse:sse("도움필요 말해 줘서 고마워요. 선생님께 이 화면을 보여 주세요. 1388",{n:3}),gap:30};
+      if(call.kind==="chat")return {sse:sse("\"도움필요\" 말해 줘서 고마워요. 선생님께 이 화면을 보여 주세요. 1388",{n:3}),gap:120};
       return apiError(500);
     }});
     const {page}=h;
@@ -489,17 +492,81 @@ const SCENES={
       await page.waitForSelector("#screen.s-help .helpcard",{timeout:10000});
       const peek=await page.evaluate(()=>{clearInterval(window.__rec);return window.__peek});
       check(peek.some(t=>t.includes("앞글1")),"the first section should have been on screen before the marker");
-      check(!peek.some(t=>/\[도|도움필요/.test(t)),"part of the [도움필요] marker was shown");
+      check(!peek.some(t=>/【|\[도|도움필요/.test(t)),"part of the 【도움필요】 marker was shown");
       await h.hold(1700);
       await page.locator("#helpnav .btn",{hasText:"이어서 하기"}).click();
       await page.waitForSelector("#screen.s-reading");
+      await wait(400);   // 이어서 하기 직후 0.35초는 누르기를 받지 않음(두 번 누르기 방지)
       check(await h.tag()==="준비된 풀이","after the marker the prepared reading should show");
-      // 대화: AI가 괄호를 빼먹은 '도움필요' → 도움 안내, 질문은 세지도 남기지도 않음
+      // 대화: AI가 괄호를 빼먹고 따옴표로 시작한 '"도움필요' → 도움 안내(오는 중에 '"도움'도 안 보임), 질문은 세지도 남기지도 않음
+      await page.evaluate(()=>{window.__peek=[];window.__rec=setInterval(()=>window.__peek.push((document.getElementById("chatlog")||{textContent:""}).textContent),5)});
       await page.fill("#q","이 카드는 무슨 뜻이에요?");
       await page.click("#askbtn");
       await page.waitForSelector("#screen.s-help .helpcard",{timeout:8000});
+      const cp=await page.evaluate(()=>{clearInterval(window.__rec);return window.__peek});
+      check(!cp.some(t=>/"도|도움/.test(t)),"part of the bracketless chat marker was shown: "+cp.filter(t=>/"도|도움/.test(t))[0]);
       const st=await page.evaluate(()=>({askCount,hist:chatHistory.length,me:chatLog.filter(m=>m.who==="me").length}));
       check(st.askCount===0&&st.hist===0&&st.me===0,"bracketless marker: question kept or counted "+JSON.stringify(st));
+      await h.finish();
+    }finally{await h.ctx.close()}
+  },
+
+  /* 설정 → 연결 확인: 크레딧 부족 400 · 확인하는 사이 키를 바꿈 */
+  async settings(browser){
+    let credit=true;
+    const h=await open(browser,"settings",{cfg:SONNET_CFG,handler:call=>{
+      if(call.kind!=="test")return apiError(500);
+      if(credit)return {status:400,json:{type:"error",error:{type:"invalid_request_error",message:"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}};
+      return {first:800,...msgJson("안")};
+    }});
+    const {page}=h;
+    try{
+      await page.goto(BASE,{waitUntil:"load"});
+      await page.click(".menubtn");await wait(400);
+      await page.locator("#sheet .row",{hasText:"설정"}).click();await wait(400);
+      await page.locator("#sheet .btn",{hasText:"연결 확인"}).click();
+      await page.waitForFunction(()=>!/확인하는 중/.test(document.getElementById("keystate").textContent),null,{timeout:8000});
+      const ks1=await page.textContent("#keystate");
+      check(ks1.includes("크레딧")&&!ks1.includes("형식"),"low credit should say so, not '요청 형식 오류': "+ks1);
+      check(h.of("test").length===2&&await page.evaluate(()=>noBeta)===false,"low credit (400 again without the beta) must not turn the Sonnet fallback beta off");
+      // 확인하는 사이 입력칸의 키를 바꾸면: '정상'을 띄우지 않고, 어떤 키도 저장하지 않음
+      credit=false;
+      await page.fill("#apikey","sk-ant-first-key-1111111111");
+      await page.locator("#sheet .btn",{hasText:"연결 확인"}).click();
+      await wait(200);
+      await page.fill("#apikey","sk-ant-other-key-2222222222");
+      await page.waitForFunction(()=>!/확인하는 중/.test(document.getElementById("keystate").textContent),null,{timeout:8000});
+      const ks2=await page.textContent("#keystate");
+      check(ks2.includes("키가 바뀌었어요")&&!ks2.includes("정상")&&await page.evaluate(()=>loadCfg().apiKey)===SONNET_CFG.apiKey,"key edited during 연결 확인: "+ks2);
+      // 바꾸지 않고 기다리면 정상 + 저장
+      await page.locator("#sheet .btn",{hasText:"연결 확인"}).click();
+      await page.waitForFunction(()=>!/확인하는 중/.test(document.getElementById("keystate").textContent),null,{timeout:8000});
+      check((await page.textContent("#keystate")).includes("정상")&&await page.evaluate(()=>loadCfg().apiKey)==="sk-ant-other-key-2222222222","an unchanged tested key should be saved");
+      await h.finish();
+    }finally{await h.ctx.close()}
+  },
+
+  /* 그림 이야기 창이 열린 사이 세 번째(마지막) AI 답이 옴 → '이걸 물어볼래요'가 남아 있으면 안 됨 */
+  async storyask(browser){
+    const h=await open(browser,"storyask",{vp:{width:390,height:844},cfg:HAIKU_CFG,handler:(call,i)=>{
+      if(call.kind==="chat")return {sse:sse("대답이에요. 카드를 보며 천천히 생각해 볼 수 있어요.",{n:4}),gap:i===2?250:20};
+      return apiError(500);
+    }});
+    const {page}=h;
+    try{
+      await h.walk();
+      await h.waitTag("준비된 풀이");
+      await h.askQ("이 카드는 무슨 뜻이에요?");
+      await h.askQ("역방향은 나쁜 건가요?");
+      check((await h.hint()).includes("남은 질문 1개"),"two AI answers should leave one question: "+await h.hint());
+      await page.fill("#q","오늘 해 볼 작은 행동은?");
+      await page.click("#askbtn");
+      await wait(500);
+      await page.locator("#screen .result").first().click();
+      await page.waitForSelector("#sheet .askbox .btn",{timeout:5000});
+      await page.waitForFunction(()=>askCount===3,null,{timeout:15000});
+      check(await page.locator("#sheet .askbox .btn").count()===0&&(await page.textContent("#sheet .askbox")).includes("다 썼어요"),
+        "이걸 물어볼래요 should turn into the 'all used' hint when the last AI answer arrives");
       await h.finish();
     }finally{await h.ctx.close()}
   },

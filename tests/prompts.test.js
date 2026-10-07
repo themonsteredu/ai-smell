@@ -153,10 +153,14 @@ test("badReading catches fortune-telling and diagnosis words but not the card na
   for(const t of ["넌 반드시 시험에 붙을 거예요.","틀림없이 좋은 일이 생겨요.","이건 운명이에요.","곧 헤어지게 될 거예요.","시험에 실패할 거예요.",
     "우울증일 수 있어요.","ADHD 같아요.","정신과에 가 보세요.","불길한 카드예요.","100% 맞아요."])assert.ok(P.badReading(t),t);
   for(const t of ["운명의 수레바퀴는 변화를 뜻해요.","운명의수레바퀴 카드예요.",good,"반드시 정답이 있는 건 아니에요.","천천히 해 보면 어떨까요?"])assert.ok(!P.badReading(t),t);
-  // 글자가 오는 중(badSoFar): 카드 이름이 '운명'까지만 온 순간에 리딩을 버리면 안 됨. 이름이 아닌 '운명'은 다음 글자에서 잡힘
+  // 글자가 오는 중에도 보므로: 카드 이름이 '운명'·'운명의 수레'까지만 온 순간에 리딩을 버리면 안 됨
   const name="■ 현재 상황 — 운명의 수레바퀴 정방향";
-  for(let k=1;k<=name.length;k++)assert.ok(!P.badSoFar(name.slice(0,k)),"mid-stream prefix: "+name.slice(0,k));
-  assert.ok(P.badSoFar("이건 운명이에")&&P.badSoFar("넌 반드시 시험에 붙을 거예요.")&&!P.badSoFar("이건 운명"),"badSoFar still catches finished words");
+  for(let k=1;k<=name.length;k++)assert.ok(!P.badReading(name.slice(0,k)),"mid-stream prefix: "+name.slice(0,k));
+  // 흔한 말과 겹치는 낱말은 그 뜻일 때만(몸과 정신과 마음 · 불길처럼 타오르는 · 운명처럼)
+  for(const t of ["몸과 정신과 마음이 지쳐 있을 수 있어요.","불길처럼 타오르는 열정이 있어요.","불길이 타오르는 그림이에요.","운명처럼 느껴질 수 있어요.","몸과 정신과"])
+    assert.ok(!P.badReading(t),t);
+  for(const t of ["운명이 정해져 있어요.","네 운명은 정해져 있어요.","운명적으로 만났어요.","정신과 진료를 받아 보세요.","정신과를 찾아가 보세요.","불길해요.","정신병이 있어요."])
+    assert.ok(P.badReading(t),t);
 });
 
 test("parseExtras keeps only valid fields for the app's own scents and safe short questions",()=>{

@@ -5,16 +5,19 @@
    - 390x844(휴대폰)와 1366x768(노트북)에서 각각 --runs 번 진행합니다. 홀수 번째 진행은
      리딩 화면에서 ☰ 메뉴 → 처음 화면 으로 나가, 다음 학생에게 앞 학생 기록이 남지 않는지 봅니다.
    - 화면 크기마다 '안전 점검'을 한 번 더 합니다: 위험한 고민 한 줄·질문 → 도움 안내 화면(네트워크 호출 없음)
-     → 선생님 확인 길게 누르기 → 이어서 하기 / 처음부터, 서버의 SAFETY·RATE 답, 다시 뽑기 후 남은 질문 수,
-     설정에서 키가 다시 보이지 않는지, AI 기능 끄기. 준비된 답변은 질문마다 다르고 남은 질문 수를 줄이지 않음.
+     → 같은 기기의 새 창에서도 도움 안내 → 선생님 확인 길게 누르기 → 이어서 하기(두 번 눌러도 아래 주제가 안 바뀜) / 처음부터,
+     서버의 SAFETY·RATE 답, 다시 뽑기 후 남은 질문 수, 설정에서 키가 다시 보이지 않는지, AI 기능 끄기.
+     준비된 답변은 질문마다 다르고 남은 질문 수를 줄이지 않음.
    - pageerror 나 console error 가 하나라도 나면 실패합니다. (Vercel 미리보기에만 붙는 도구 막대 vercel.live 가
      CSP 에 막혀 남기는 오류는 앱과 상관없어 셈하지 않아요)
-   - 창(메뉴·설정 등)은 열린 뒤 0.35초 동안 클릭을 받지 않으므로(두 번 누르기 방지) 창을 열고 바로 누를 때는 sheetWait 만큼 기다려요.
+   - 창(메뉴·설정 등)이 열리거나 닫힌 뒤, 도움 안내에서 이어서 하기·처음부터를 누른 뒤 0.35초 동안은 누르기를 받지 않으므로
+     (두 번 누르기 방지) 그 바로 뒤에 누를 때는 sheetWait 만큼 기다려요.
    - 숨긴 카드(content.js 의 hidden:true) 그림이 요청되거나 화면 어디에(부채꼴·칸·결과) 보이면 실패합니다.
    - 화면·창 점검(ux)을 390x844 · 820x1180 · 1024x768 · 1366x768 · 1920x1080 에서 한 번씩 합니다:
      표지 그림이 늦어도 자리와 시작 버튼이 보이는지, 넓은 화면에서 색·주제·카드·향기 단계가 스크롤 없이 들어오는지,
      뒤집은 카드가 탁자 안에 다 보이는지, 리딩 글이 15px 밑으로 줄지 않는지, 설정 '저장'이 창 안에 있는지,
-     Esc·바깥 누르기·고친 내용 확인, '기본값으로'가 저장 전에는 향기 목록을 지우지 않는지, 키보드로 카드 고르기,
+     Esc·바깥 누르기·고친 내용 확인, 창의 닫기를 두 번 눌러도 아래 화면이 눌리지 않는지(메뉴·그림 이야기),
+     메뉴 → 향기 목록을 두 번 눌러도 입력칸에 초점이 가지 않는지, '기본값으로'가 저장 전에는 향기 목록을 지우지 않는지, 키보드로 카드 고르기,
      한글 조합 중 Enter 로 질문이 나가지 않는지.
    - 재미 요소 점검(fun)을 390x844 · 1366x768 에서 한 번씩, 읽어 주기가 없는 브라우저로 390x844 에서 한 번 더:
      소리·진동·반짝임, 카드 그림 이야기(클릭·키보드), '이걸 물어볼래요', 읽어 주기, 글씨 크게, 소리 끄기(새로고침 뒤에도).
@@ -58,8 +61,9 @@ async function open(browser,vp){
       return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({answer:api.answer,reason:api.reason})});
     }
     if(!LOCAL)return route.continue();
-    const resp=await route.fetch();
-    return route.fulfill({response:resp,headers:{...resp.headers(),...SITE_HEADERS}});
+    // 창(탭)을 닫는 사이 오던 요청은 그냥 버림(닫힌 창의 요청을 채우려다 점검 전체가 멈추지 않게)
+    const resp=await route.fetch().catch(()=>null);
+    if(resp)await route.fulfill({response:resp,headers:{...resp.headers(),...SITE_HEADERS}}).catch(()=>{});
   });
   const page=await ctx.newPage();
   page.on("pageerror",e=>errors.push("pageerror: "+e.message));
@@ -271,6 +275,11 @@ async function safetyRun(browser,vp){
   check(await flagCount()===1,"flag timestamp not logged");
   check(!(await page.evaluate(()=>localStorage.getItem("maum_tarot_flags"))).includes("죽"),"flag log must hold no text");
   check(await page.locator("#screen .btn").count()===0,"student-visible nav buttons on the help card");
+  // 같은 기기에서 창(탭)을 새로 열어도 도움 안내(학생이 탭을 닫았다 열어 '선생님 확인'을 건너뛰지 못하게)
+  const p2=await h.ctx.newPage();
+  await p2.goto(BASE.href,{waitUntil:"load"});
+  check(await p2.locator("#screen.s-help .helpcard").count()===1,"a new tab on the same device should show the help card too");
+  await p2.close();
   await page.click(".menubtn");
   check(await page.locator("#sheet .row",{hasText:"처음 화면"}).count()===0,"menu offers 처음 화면 while flagged");
   await sheetWait();
@@ -278,8 +287,11 @@ async function safetyRun(browser,vp){
   await h.hold(300);   // 짧게 누르면 아무 일도 없음
   check(await page.locator("#helpnav .btn").count()===0,"short press dismissed the help card");
   await h.hold(1700);
-  await page.locator("#helpnav .btn",{hasText:"이어서 하기"}).click();
+  const topic=await page.evaluate(()=>state.topic);
+  await page.locator("#helpnav .btn",{hasText:"이어서 하기"}).dblclick();   // 두 번째 클릭이 아래 주제 줄을 누르지 않아야 함
   await atStep("s-topic");
+  await wait(450);
+  check(await page.evaluate(()=>state.topic)===topic,"double-click on 이어서 하기 changed the topic underneath");
   check(await page.inputValue("#note")==="","flagged note should be cleared on resume");
   check(await flagged(),"crest cue must stay red until 확인했어요 in Settings (a student could hold 선생님 확인 too)");
 
@@ -296,6 +308,7 @@ async function safetyRun(browser,vp){
   await h.hold(1700);
   await page.locator("#helpnav .btn",{hasText:"이어서 하기"}).click();
   await atStep("s-reading");
+  await sheetWait();   // 이어서 하기 직후 0.35초는 누르기를 받지 않음(두 번 누르기 방지)
   check(await page.locator("#chatlog .msg").count()===1,"chat should hold only the greeting after resume");
   check(await page.evaluate(()=>askCount)===0,"crisis question used up a question");
 
@@ -318,7 +331,7 @@ async function safetyRun(browser,vp){
 
   // 5) 서버가 SAFETY(AI가 [도움필요]로 판단) → 도움 안내 → 처음부터는 전부 지움
   api.reason="SAFETY";api.answer="말해 줘서 고마워요. 1388";
-  await page.fill("#q","요즘 집에 가기가 무서워요");
+  await page.fill("#q","요즘 마음이 너무 힘들어요");   // 기기 안의 확인에는 걸리지 않고 서버(AI)만 위험하다고 본 경우
   await page.click("#askbtn");
   await helpShown("server SAFETY");
   check(await flagCount()===3,"expected 3 flag timestamps");
@@ -331,6 +344,7 @@ async function safetyRun(browser,vp){
 
   // 6) 설정: 저장된 키는 입력칸에 다시 나오지 않음, 모델 버튼이 입력 중인 키를 지우지 않음, AI 기능 끄기
   await page.evaluate(()=>localStorage.setItem("maum_tarot_cfg",JSON.stringify({apiKey:"sk-ant-api03-SECRETSECRETSECRET-abcd",model:"claude-3-haiku-20240307"})));
+  await sheetWait();   // 처음부터 직후 0.35초는 누르기를 받지 않음
   await page.click(".menubtn");
   await sheetWait();
   await page.locator("#sheet .row",{hasText:"설정"}).click();
@@ -383,7 +397,7 @@ async function uxRun(browser,vp){
   const settle=()=>page.waitForFunction(()=>document.scrollingElement.scrollHeight-innerHeight<=1,null,{timeout:1500}).catch(()=>{});
   const fits=async where=>{if(wide){await settle();const o=await overflow();check(o<=1,`${where}: page scrolls by ${o}px on a wide screen`)}};
   const cfg=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("maum_tarot_cfg")||"{}"));
-  const openSheet=async name=>{await page.click(".menubtn");await sheetWait();await page.locator("#sheet .row",{hasText:name}).click();await page.waitForSelector("#sheet .sheetbox[role=dialog][aria-modal=true]");await sheetWait()};
+  const openSheet=async name=>{await sheetWait();await page.click(".menubtn");await sheetWait();await page.locator("#sheet .row",{hasText:name}).click();await page.waitForSelector("#sheet .sheetbox[role=dialog][aria-modal=true]");await sheetWait()};
   try{
   // 1) 표지 그림이 늦게 와도 자리가 잡혀 있고 진짜 '시작하기' 버튼이 보임
   let release;const held=new Promise(r=>release=r);
@@ -410,6 +424,24 @@ async function uxRun(browser,vp){
   check(await page.evaluate(()=>document.activeElement&&document.activeElement.tagName==="H2"),"focus should move to the step heading");
   await scr(" .rows .row").nth(1).click();
   await fits("topic");
+  // 두 번 누르기: 메뉴의 닫기를 두 번 눌러도 두 번째가 아래 주제 줄·카드 펼치기를 누르지 않음,
+  // 메뉴의 '향기 목록'을 두 번 눌러도 향기 목록 창의 입력칸·고르기 칸에 초점이 가지 않음(태블릿 키보드·펼침 방지)
+  const topic=await page.evaluate(()=>state.topic);
+  await page.click(".menubtn");
+  await sheetWait();
+  await page.locator("#sheet .btn",{hasText:"닫기"}).dblclick();
+  await wait(450);
+  const t2=await page.evaluate(()=>({topic:state.topic,step:state.step,sheet:!!document.getElementById("sheet")}));
+  check(t2.topic===topic&&t2.step===1&&!t2.sheet,"double-click on the menu's 닫기 carried into the screen below: "+JSON.stringify(t2));
+  await page.click(".menubtn");
+  await sheetWait();
+  const sr=await page.locator("#sheet .row",{hasText:"향기 목록"}).boundingBox();
+  await page.mouse.dblclick(sr.x+sr.width/2,sr.y+sr.height/2);
+  await wait(450);
+  const fe=await page.evaluate(()=>({tag:document.activeElement&&document.activeElement.tagName,editor:!!document.getElementById("scentedit")}));
+  check(fe.editor&&fe.tag!=="INPUT"&&fe.tag!=="SELECT","double-click on 향기 목록 focused a field in the scent editor: "+JSON.stringify(fe));
+  await page.keyboard.press("Escape");
+  await sheetWait();
   await nav(primary());
   await atStep("s-draw");
   check(await page.getAttribute("#status","aria-live")==="polite","#status should be a live region");
@@ -454,7 +486,10 @@ async function uxRun(browser,vp){
   await page.locator("#screen .result").first().dblclick();
   await wait(450);
   check(await page.locator("#sheet .storybox").count()===1,"double-click on a result card opened and closed its story at once");
-  await page.keyboard.press("Escape");
+  // 그림 이야기의 닫기를 두 번 눌러도 두 번째가 아래의 다른 카드 그림 이야기를 열지 않음
+  await page.locator("#sheet .btn",{hasText:"닫기"}).dblclick();
+  await wait(450);
+  check(await page.locator("#sheet").count()===0,"double-click on the story's 닫기 opened another sheet underneath");
   // 다시 뽑기를 취소하면 리딩이 그대로
   h.answer=false;
   await nav(page.locator("#screen .nav .btn",{hasText:"다시 뽑기"}));
@@ -482,7 +517,7 @@ async function uxRun(browser,vp){
   check(await page.locator("#sheet .row").count()>0,"double-click on ☰ should leave the menu open");
   const before2=await cfg();
   for(const [i,dx] of [-40,0,40].entries()){
-    if(i){await page.keyboard.press("Escape");await wait(300);await page.click(".menubtn");await wait(450)}
+    if(i){await page.keyboard.press("Escape");await sheetWait();await page.click(".menubtn");await wait(450)}
     const b=await page.locator("#sheet .row",{hasText:"설정"}).boundingBox();
     await page.mouse.dblclick(b.x+b.width/2+dx,b.y+b.height/2);
     await wait(450);
