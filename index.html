@@ -712,19 +712,31 @@ function clearDraw(){
   state.draw=[];state.readHtml="";state.reading="";state.scents=[];
   chatHistory=[];chatLog=[];asking=false;aiRead=null;extras=null;
 }
+/* 확인 창 — 모아랩 광장처럼 다른 사이트가 이 앱을 틀(iframe)에 넣고 allow-modals 를 주지 않으면,
+   confirm() 은 창을 띄우지도 않고 곧바로 '취소'를 돌려줘요. 그러면 다시 뽑기·처음부터가 아무 일도 안 하게 되므로,
+   틀 안에서 '묻자마자 취소'(사람이 누를 수 없을 만큼 빠름)면 확인 창이 막힌 것으로 보고 그대로 진행해요.
+   한 번 막힌 걸 알면 그 뒤로는 묻지 않아요. 틀 밖(앱을 바로 연 경우)에서는 지금처럼 물어봐요 */
+const inFrame=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+let modalsBlocked=false;
+function askOk(msg){
+  if(modalsBlocked)return true;
+  const t=Date.now(),ok=confirm(msg);
+  if(!ok&&inFrame&&Date.now()-t<50){modalsBlocked=true;return true}
+  return ok;
+}
 /* 리딩·대화가 있으면 지우기 전에 한 번 더 물어봄(잘못 눌러 사라지지 않게) */
 const hasWork=()=>state.step>=3||chatLog.length>0;
 /* 처음부터(표지로) — 다음 학생에게 앞 학생의 색·주제·고민·카드·대화가 남지 않도록 전부 지움.
    force: 선생님이 도움 안내에서 '처음부터'를 고른 경우처럼 묻지 않고 바로 */
 function restart(force){
   if(state.flag||!navOk())return;
-  if(force!==true&&hasWork()&&!confirm(state.step===4?"다 끝났나요? 처음으로 가면 오늘 뽑은 카드와 이야기가 화면에서 사라져요.":"처음으로 갈까요? 지금 카드와 이야기는 사라져요."))return;
+  if(force!==true&&hasWork()&&!askOk(state.step===4?"다 끝났나요? 처음으로 가면 오늘 뽑은 카드와 이야기가 화면에서 사라져요.":"처음으로 갈까요? 지금 카드와 이야기는 사라져요."))return;
   clearDraw();askCount=0;
   state=blankState();render();
 }
 function redraw(){
   if(state.flag||!navOk())return;
-  if(!confirm("새 카드를 뽑을까요? 지금 카드와 이야기는 사라져요."))return;
+  if(!askOk("새 카드를 뽑을까요? 지금 카드와 이야기는 사라져요."))return;
   clearDraw();state.step=2;render();
 }
 function start(){if(state.flag||!navOk())return;state.step=0;render()}
@@ -863,7 +875,7 @@ function markDirty(on=true){
 function closeSheet(force){
   const d=document.getElementById("sheet");
   if(!d)return true;
-  if(force!==true&&d.dataset.dirty&&!confirm("저장하지 않은 내용이 있어요. 저장하지 않고 닫을까요?"))return false;
+  if(force!==true&&d.dataset.dirty&&!askOk("저장하지 않은 내용이 있어요. 저장하지 않고 닫을까요?"))return false;
   if(ttsBtn&&d.contains(ttsBtn))stopSpeak();   // 창 안에서 읽어 주던 글(그림 이야기)은 창을 닫으면 멈춤
   d.remove();appEl.inert=false;holdTaps();
   const o=sheetOpener;sheetOpener=null;
@@ -912,7 +924,8 @@ function help(){
       · 2단계의 한 줄 메모는 리딩에 다시 나오지 않고, 저장하거나 AI에게 보내지 않아요.<br>
       · 다시 뽑기를 해도 남은 질문 수는 다시 채워지지 않아요(같은 학생으로 봐요). 리딩·대화가 있을 때 다시 뽑기·처음부터를 누르면 지우기 전에 한 번 더 물어봐요.<br>
       · 휴대폰처럼 좁은 화면에서는 카드를 15장만 펼쳐요(카드가 너무 얇아지지 않게). 그래도 숨기지 않은 모든 카드 가운데에서 무작위로 골라요.<br>
-      · <b>다음 학생으로 넘길 때</b>: 향기 화면의 <b>처음부터</b>나 ☰ 메뉴 → <b>처음 화면</b>을 눌러 주세요. 앞 학생의 색·주제·메모·카드·대화가 모두 지워져요. 새로고침해도 앞 학생 기록은 돌아오지 않아요.
+      · <b>다음 학생으로 넘길 때</b>: 향기 화면의 <b>처음부터</b>나 ☰ 메뉴 → <b>처음 화면</b>을 눌러 주세요. 앞 학생의 색·주제·메모·카드·대화가 모두 지워져요. 새로고침해도 앞 학생 기록은 돌아오지 않아요.<br>
+      · <b>모아랩 광장 안에서 열 때</b>: 광장의 '마음의 향기 타로 열기'를 누르면 이 앱이 광장 화면 안에 열려요. 그 안에서는 다시 뽑기·처음부터를 누르면 확인 창 없이 바로 진행돼요. 설정에 넣은 AI 키와 도움 안내 기록은 광장 안에서 따로 보관돼서, 광장 안에서 AI를 쓰려면 그 안의 설정에서 키를 한 번 더 넣어야 해요.
     </div>
     <div class="notice teach-help">
       <b>선생님께 — 소리 · 글씨 · 그림 이야기 · 읽어 주기</b><br>

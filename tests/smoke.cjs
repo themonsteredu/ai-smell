@@ -21,6 +21,8 @@
      한글 조합 중 Enter 로 질문이 나가지 않는지.
    - 재미 요소 점검(fun)을 390x844 · 1366x768 에서 한 번씩, 읽어 주기가 없는 브라우저로 390x844 에서 한 번 더:
      소리·진동·반짝임, 카드 그림 이야기(클릭·키보드), '이걸 물어볼래요', 읽어 주기, 글씨 크게, 소리 끄기(새로고침 뒤에도).
+   - 모아랩 광장처럼 다른 사이트의 틀(iframe, allow-modals 없는 sandbox) 안에서 한 번: 허용 안 된 사이트에서는 안 뜨고,
+     job.moakit.ai 에서는 끝까지 진행되며 다시 뽑기·처음부터가 확인 창 없이 동작하는지.
    - 주소가 localhost 면 vercel.json 의 보안 헤더(CSP 등)를 똑같이 붙여서 확인합니다.
    - /api/ask 는 NO_KEY 로 대신 답하고 api.anthropic.com 은 막습니다(요금이 드는 호출 없음). */
 let pw;
@@ -113,6 +115,86 @@ async function open(browser,vp){
     console.log(`ok   ${label}`);
   };
   return h;
+}
+
+/* 모아랩 광장처럼 다른 사이트가 이 앱을 틀(iframe)에 넣었을 때 — 광장과 같은 sandbox(allow-modals 없음).
+   허용 안 된 사이트(blocked.example)에서는 앱이 뜨지 않고, 모아랩(job.moakit.ai)에서는 끝까지 진행되며
+   확인 창이 막혀도 다시 뽑기·처음부터가 그대로 동작하는지 봐요 */
+async function plazaRun(browser){
+  const ctx=await browser.newContext({viewport:{width:1366,height:900}});
+  const errors=[];
+  const parent=`<!doctype html><meta charset="utf-8"><title>plaza</title><iframe id="f" src="${BASE.href}" sandbox="allow-scripts allow-same-origin allow-forms" referrerpolicy="no-referrer" style="width:1320px;height:880px;border:0"></iframe>`;
+  await ctx.route("**/*",async route=>{
+    const u=new URL(route.request().url());
+    if(u.hostname==="api.anthropic.com")return route.abort();
+    if(u.hostname==="job.moakit.ai"||u.hostname==="blocked.example")return route.fulfill({status:200,contentType:"text/html; charset=utf-8",body:parent});
+    if(u.origin!==BASE.origin)return route.continue();
+    if(u.pathname==="/api/ask")return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({answer:null,reason:"NO_KEY"})});
+    if(!LOCAL)return route.continue();
+    const resp=await route.fetch().catch(()=>null);
+    if(resp)await route.fulfill({response:resp,headers:{...resp.headers(),...SITE_HEADERS}}).catch(()=>{});
+  });
+  const page=await ctx.newPage();
+  let dialogs=0;
+  page.on("dialog",d=>{dialogs++;d.accept()});
+  page.on("pageerror",e=>errors.push("pageerror: "+e.message));
+  // 막힌 확인 창 안내(allow-modals)는 기대한 것이라 셈하지 않음
+  page.on("console",m=>{if(m.type()==="error"&&!/vercel\.live|allow-modals|Ignored call to 'confirm/i.test(m.text()))errors.push("console: "+m.text())});
+  const appFrame=()=>page.frames().find(x=>x!==page.mainFrame()&&x.url().startsWith(BASE.origin));
+  try{
+    // 1) 허용 안 된 사이트 — 틀 안에 앱이 뜨지 않아야 함
+    await page.goto("https://blocked.example/plaza");
+    await wait(2000);
+    const bf=appFrame();
+    const shown=bf?await bf.locator(".poster").count().catch(()=>0):0;
+    check(shown===0,"a site outside the frame-ancestors list could show the app in a frame");
+    errors.length=0;   // 막을 때 나오는 'Refused to frame …' 은 기대한 오류
+    // 2) 모아랩 — 열리고 처음부터 끝까지
+    await page.goto("https://job.moakit.ai/class");
+    await page.waitForFunction(()=>true);
+    let fr=null;
+    for(let i=0;i<40&&!fr;i++){fr=appFrame();if(!fr)await wait(200)}
+    check(fr,"the app did not load inside the 모아랩 frame");
+    await fr.locator(".poster .start").waitFor({timeout:8000});
+    check(await fr.evaluate(()=>inFrame),"the app should know it runs inside a frame");
+    const nav=async sel=>{await wait(500);await fr.locator(sel).first().click()};
+    const step=cls=>fr.waitForSelector("#screen.content."+cls,{timeout:6000});
+    const draw3=async()=>{
+      await fr.waitForFunction(()=>!document.getElementById("fan").classList.contains("locked"),null,{timeout:6000});
+      for(let k=0;k<3;k++){
+        const idx=await fr.evaluate(()=>[...document.querySelectorAll("#fan .card")].findIndex(el=>!el.classList.contains("hide")&&!el.classList.contains("chosen")));
+        await fr.locator("#fan .card").nth(idx).dispatchEvent("click");
+        await fr.waitForFunction(k=>document.querySelectorAll("#slots .slot.filled").length===k+1&&!document.querySelector("#fan .card.chosen"),k,{timeout:6000});
+      }
+      await nav("#go");
+      await step("s-reading");
+    };
+    await nav(".poster .start");
+    await step("s-color");
+    await fr.locator("#screen .rows .row").first().click();
+    await nav("#screen .nav .btn.primary");
+    await step("s-topic");
+    await fr.locator("#screen .rows .row").first().click();
+    await nav("#screen .nav .btn.primary");
+    await step("s-draw");
+    await draw3();
+    // 다시 뽑기 — 확인 창이 막혀도 새 카드 뽑기로 넘어가야 함
+    await nav("#screen .nav .btn:has-text('다시 뽑기')");
+    await step("s-draw");
+    check(await fr.evaluate(()=>modalsBlocked),"askOk should notice the blocked dialog");
+    await draw3();
+    await nav("#screen .nav .btn.primary");
+    await step("s-scent");
+    // 처음부터 — 마찬가지로 바로 표지로, 앞 학생 기록 없이
+    await nav("#screen .nav .btn.primary");
+    await fr.waitForSelector("#screen.cover",{timeout:6000});
+    const st=await fr.evaluate(()=>({draw:state.draw.length,color:state.color,chat:chatLog.length}));
+    check(st.draw===0&&!st.color&&st.chat===0,"처음부터 inside the frame left the previous student's state: "+JSON.stringify(st));
+    check(dialogs===0,"a sandboxed frame should never show a dialog");
+    await wait(300);
+    check(!errors.length,"errors:\n  "+errors.join("\n  "));
+    console.log("ok   plaza frame (job.moakit.ai, sandbox without allow-modals)");
+  }finally{await ctx.close()}
 }
 
 async function run(browser,vp,n){
@@ -750,7 +832,9 @@ async function funRun(browser,vp,tts){
       try{await uxRun(browser,vp)}
       catch(e){failed++;console.log(`FAIL ${vp.width}x${vp.height} ux: ${e.message}`)}
     }
+    try{await plazaRun(browser)}
+    catch(e){failed++;console.log(`FAIL plaza frame: ${e.message}`)}
   }finally{await browser.close()}
-  console.log(failed?`${failed} run(s) failed`:`all ${VIEWPORTS.length*(RUNS+2)+1+UX_VIEWPORTS.length} runs passed (${BASE.href})`);
+  console.log(failed?`${failed} run(s) failed`:`all ${VIEWPORTS.length*(RUNS+2)+2+UX_VIEWPORTS.length} runs passed (${BASE.href})`);
   process.exit(failed?1:0);
 })();
