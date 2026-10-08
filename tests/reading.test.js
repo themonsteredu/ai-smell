@@ -38,7 +38,8 @@ function cleanText(t,where){
   assert.ok(typeof t==="string"&&t.trim(),where+": empty");
   assert.ok(!/undefined|NaN|\[object|null/.test(t),where+": "+t);
   assert.deepEqual(particleErrors(t),[],where);
-  for(const h of HIDDEN)assert.ok(!new RegExp(`(^|[^가-힣])${h}( 카드| 정방향| 역방향|[은는이가을를과와]\\s)`).test(t),where+": names hidden card "+h);
+  // 한 글자 이름(별)은 그림 이야기의 '별이 빛나는 밤'처럼 흔한 낱말이라, '별 카드'·'별 정방향'처럼 카드로 부를 때만 셈
+  for(const h of HIDDEN)assert.ok(!new RegExp(`(^|[^가-힣])${h}( 카드| 정방향| 역방향${h.length>1?"|[은는이가을를과와]\\s":""})`).test(t),where+": names hidden card "+h);
 }
 
 /* 실제 앱과 같은 길로 한 판 뽑기: 덱 만들기 → 부채꼴에서 아무 자리나 세 번 */
@@ -69,7 +70,7 @@ test(`${N} random draws: no hidden card, every summary reachable, clean text, co
     const text=strip(html);
     cleanText(text,"reading");
     assert.equal((html.match(/<p>/g)||[]).length,color?5:4,"paragraph count");
-    assert.ok(text.includes(`‘${topic}’${R.hasJong(topic)?"이라는":"라는"} 주제`),"topic phrase: "+topic);
+    assert.ok(text.includes(C.TOPIC_HOOK[topic]),"topic line missing: "+topic);
     if(!R.hasJong(topic))assert.ok(!text.includes(topic+"’이라는")&&!text.includes(topic+"이라는"),"이라는 after a vowel-final topic");
     for(const d of draw)if(d.notLiteral){assert.ok(text.includes(d.notLiteral),d.ko+": not-literal note missing");notLiteral++}
     const flow=[...flows.keys()].find(t=>text.includes(t));
@@ -276,7 +277,7 @@ test("a heavy meaning in the '앞으로 취할 태도' slot is never framed as a
     assert.ok(last.includes(heavyAtt)&&!plain.some(t=>last.includes(t)),x.ko+": "+last);
     for(let n=0;n<3;n++){
       const a=R.localAnswer(x.ko+" 카드는 무슨 뜻이에요?",n,{draw,topic:"가족",scents:[]});
-      assert.ok(!a.includes("앞으로 가져 볼 마음가짐"),a);
+      assert.ok(!a.includes("앞으로 챙겨 갈 마음가짐"),a);
     }
   }
   // 가벼운 카드는 예전처럼 자리 문장 가운데 하나

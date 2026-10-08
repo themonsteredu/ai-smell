@@ -43,7 +43,7 @@ test("all 9 colors take the right particles (no '회색 색')",()=>{
   for(const [c] of C.colors){
     const draw=C.deckPool().slice(0,3).map(x=>({...x,rev:false}));
     const html=R.make({color:c,topic:"나 자신",draw,hasNote:false});
-    assert.ok(html.includes(`처음에 고른 ${R.josa(c,"이","가")} 말해 주는`),c);
+    assert.ok(html.includes(`처음에 고른 ${c}의 마음도`),c);
     assert.ok(!/색 색/.test(html),c+": '색 색'");
   }
 });
