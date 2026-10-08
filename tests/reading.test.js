@@ -277,7 +277,7 @@ test("a heavy meaning in the '앞으로 취할 태도' slot is never framed as a
     assert.ok(last.includes(heavyAtt)&&!plain.some(t=>last.includes(t)),x.ko+": "+last);
     for(let n=0;n<3;n++){
       const a=R.localAnswer(x.ko+" 카드는 무슨 뜻이에요?",n,{draw,topic:"가족",scents:[]});
-      assert.ok(!a.includes("앞으로 챙겨 갈 마음가짐"),a);
+      assert.ok(!a.includes("다음 걸음에 챙겨 갈 마음"),a);
     }
   }
   // 가벼운 카드는 예전처럼 자리 문장 가운데 하나

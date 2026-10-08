@@ -55,7 +55,7 @@ const FLOW={
   knot:"세 장을 이어 보니, 마음속 실타래가 조금 엉켜 있는 것 같아요. 서둘러 풀지 않아도 괜찮아요. 어디서부터 엉켰는지 천천히 따라가 봐요.",
   bright:"마지막 카드가 밝은 쪽을 바라보고 있어요. 억지로 웃지 않아도 괜찮아요. 오늘 있었던 작은 좋은 일 하나를 떠올려 볼까요?",
   light:"세 장 모두 부드러운 얼굴로 나왔어요. 내 안에 좋은 힘이 숨어 있다는 뜻 같아요. 그 힘을 어디에 써 보고 싶나요?",
-  turn:"첫 카드는 조금 무거워 보여도, 뒤의 카드들은 한결 가벼워요. 힘든 마음 속에서도 작은 길이 보이기 시작하는 것 같아요.",
+  turn:"첫 카드는 조금 무거워 보여도, 뒤의 카드들은 한결 가벼워요. 힘든 마음속에서도 작은 길이 보이기 시작하는 것 같아요.",
   mixed:"세 장 안에 가벼운 마음과 무거운 마음이 나란히 있어요. 둘 다 진짜 내 마음이에요. 지금은 어느 쪽 목소리가 더 크게 들리나요?"
 };
 function combine(a,b,c){
@@ -73,15 +73,15 @@ const picture=x=>{const m=/^[^.!?]*[.!?]/.exec(String(x.story||"").trim());retur
 function cardPart(x,i,topic){
   const k=cardNo(x),raw=words(x),w=raw.map(quote);
   // 앞의 두 낱말만 — ‘집중’과 ‘해내는 힘’. 낱말이 길면(‘아쉬움과 잃어버림’) 하나만 — 문장이 늘어지지 않게
-  const both=w[1]&&raw[0].length<=6&&raw[1].length<=7?`${josa(w[0],"과","와")} ${w[1]}`:w[0];
+  const both=w[1]&&raw[0].length<=6&&raw[1].length<=7&&!/[과와] /.test(raw[1])?`${josa(w[0],"과","와")} ${w[1]}`:w[0];
   const frame=x.rev?[
-    `카드가 거꾸로 나왔어요. 이번에는 ${josa(both,"이","가")} 먼저 눈에 띄어요.`,
-    `거꾸로 놓인 그림은 ${josa(both,"을","를")} 살짝 보여 줘요.`,
-    `그림이 거꾸로 놓였네요. 같은 그림을 반대쪽에서 보면 ${josa(both,"이","가")} 보여요.`
+    `카드가 거꾸로 나왔어요. 이쪽에서 보면 ${josa(both,"이","가")} 눈에 띄어요.`,
+    `거꾸로 놓인 그림은 ${josa(both,"을","를")} 보여 줘요.`,
+    `그림이 거꾸로 놓였네요. 반대쪽에서 바라보니 ${josa(both,"이","가")} 보여요.`
   ][(k+i)%3]:[picture(x),[
     `이 그림은 ${josa(both,"을","를")} 속삭이고 있어요.`,
-    `이 카드가 건네는 말은 ${josa(both,"이에요","예요")}.`,
-    `그림에서 ${both}의 기운이 느껴져요.`
+    `이 카드가 들려주는 말은 ${josa(both,"이에요","예요")}.`,
+    `그림을 보고 있으면 ${josa(both,"이","가")} 떠올라요.`
   ][(k+i)%3]].filter(Boolean).join(" ");
   // '앞으로 취할 태도' 자리의 무거운 뜻(혼란·도움을 피함 …)은 그렇게 하라는 말로 읽히지 않게 따로
   const tails=C.ROLE_TAIL[i]||[],tail=i===2&&heavy(x)?C.ROLE_TAIL_HEAVY:tails.length?tails[k%tails.length]:"";
@@ -90,8 +90,8 @@ function cardPart(x,i,topic){
 }
 function make(s){
   const [a,b,c]=s.draw,color=s.color;
-  const colorPart=color?`<p><b>내가 고른 색 — ${color}</b><br>${C.COLOR_MEANING[color]||"지금의 마음을 담은 색이에요."} 이 색을 마음 한쪽에 살짝 놓아두고, 이제 카드를 펼쳐 볼게요.</p>`:"";
-  const jotted=s.hasNote?" 아까 적어 둔 한 줄과 닮은 데가 있었나요?":"";
+  const colorPart=color?`<p><b>내가 고른 색 — ${color}</b><br>${C.COLOR_MEANING[color]||"지금의 마음을 담은 색이에요."} 이 색을 한쪽에 놓아두고, 이제 카드 이야기를 하나씩 들어 볼게요.</p>`:"";
+  const jotted=s.hasNote?" 아까 적어 둔 한 줄은 카드와 맞춰 보지 않고, 내 마음속에 소중히 간직해 둬요.":"";
   const colorTie=color?` 처음에 고른 ${color}의 마음도 이 이야기 속에 함께 흐르고 있어요.`:"";
   return [colorPart,...[a,b,c].map((x,i)=>cardPart(x,i,s.topic)),
     `<p><b>세 카드의 흐름</b><br>${combine(a,b,c)}${jotted}${colorTie}</p>`].filter(Boolean).join("\n");
@@ -124,9 +124,9 @@ function pickScents(draw,lib){
    질문 속 낱말로 알맞은 답을 고르고, 질문에 뽑은 카드 이름이 있으면 그 카드를 두고 답해요.
    카드는 늘 '○○ 카드'라고 불러요('죽음은 …'처럼 쓰면 카드 이야기인지 헷갈려요).
    물어본 카드가 없을 때는 죽음·탑(notLiteral)이 아닌 카드를 골라, 학생 이야기를 무서운 카드와 잇지 않아요. */
-const ROLE_SEE=["지금 내 마음과 닮은 모습인지도 몰라요.","마음속에 숨어 있는 생각일지도 몰라요.","앞으로 챙겨 갈 마음가짐일지도 몰라요."];
-const ROLE_SEE_HEAVY="이런 마음이 찾아올 때 나를 도와줄 마음가짐은 뭘지 떠올려 봐요.";
-const CLOSE=["정답은 없어요. 떠오르는 대로 생각해 봐요.","생각난 걸 짧게 말해 보거나 적어 봐도 좋아요.","더 이야기하고 싶으면 선생님과 함께 나눠 봐요."];
+const ROLE_SEE=["지금 내 마음과 닮은 모습인지도 몰라요.","마음속에 숨어 있는 생각일지도 몰라요.","다음 걸음에 챙겨 갈 마음일지도 몰라요."];
+const ROLE_SEE_HEAVY="이런 마음이 찾아올 때 나를 도와줄 방법은 무엇일지 생각해 봐요.";
+const CLOSE=["정답은 없어요. 어떤 생각이든 다 괜찮아요.","생각난 걸 짧게 말해 보거나 적어 봐도 좋아요.","더 이야기하고 싶으면 선생님과 함께 나눠 봐요."];
 /* 흔한 낱말과 같은 카드 이름(나는 바보 같아요 · 달리기 · 힘이 없어요)은 뒤에 '카드'·'정방향'·'역방향'이 올 때만 카드로 봄 */
 const WORDY=/^(?:바보|힘|달|정의|절제|정원|열쇠|물고기|닻)$/;
 const SCARY=/무서|무섭|죽음|나쁜|불길|겁나/;
@@ -171,7 +171,8 @@ function localAnswer(q,n,s){
     body=`‘${C.roles[d.indexOf(last)]}’ 자리의 ${josa(nm(last),"은","는")} ${josa(first(last),"을","를")} 떠올리게 해요. `
       +(heavy(last)?"이런 마음이 들 때는 잠깐 멈추고, 천천히 할 수 있는 일부터 골라 보세요.":"이 마음을 오늘 할 수 있는 작은 행동 하나로 바꿔 본다면 무엇이 있을까요?")+calmNote(last);
   }else if(FUTURE.test(t)&&!/왜/.test(t)){   // 앞일을 묻는 질문 — 카드는 앞일을 맞히지 않아요
-    body=`카드는 앞일을 맞히지 않아요. 대신 ${josa(nm(last),"이","가")} 보여 주는 ${josa(first(last),"을","를")} 떠올리며, 오늘 내가 해 볼 수 있는 일을 생각해 보세요.${calmNote(last)}`;
+    body=`카드는 앞일을 맞히지 않아요. 대신 ${josa(nm(last),"이","가")} 보여 주는 ${josa(first(last),"을","를")} 떠올리며, `
+      +(heavy(last)?"이런 마음이 들 때 오늘 나를 도와줄 작은 일을 하나 생각해 보세요.":"오늘 내가 해 볼 수 있는 일을 생각해 보세요.")+calmNote(last);
   }else if(/친구|가족|공부|시험|숙제|학교|학원|엄마|아빠|부모|형|누나|언니|오빠|동생|왜 ?(?:나|저)는|(?:나|저)는 왜/.test(t)){   // 내 이야기를 했을 때 — 먼저 고맙다고 하고 카드와 이어 봄
     body=`이야기해 줘서 고마워요. ${josa(nm(turn),"이","가")} 보여 주는 ${josa(first(turn),"이","가")} 지금 내 이야기와 닮은 점이 있는지 천천히 생각해 보세요.${calmNote(turn)}`;
   }else body=about(turn);

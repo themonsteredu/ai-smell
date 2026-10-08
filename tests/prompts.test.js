@@ -103,7 +103,10 @@ test("READING_SYSTEM: safety block first, every card (hidden ones too, sorted by
   const R=P.READING_SYSTEM;
   assert.ok(R.startsWith(P.SAFETY_BLOCK));
   assert.ok(!R.includes("흉보기"));
-  for(const c of C.cards)assert.ok(R.includes(`- ${c.ko} — 정방향: ${c.up} / 역방향: ${c.down}`),c.ko);
+  // 카드마다 이 앱 카드의 실제 그림(그림 이야기의 첫 문장)이 함께 가요 — AI가 그림을 지어내지 않게
+  const pic=c=>(/^[^.!?]*[.!?]/.exec(c.story.trim())||[""])[0];
+  for(const c of C.cards)assert.ok(pic(c)&&R.includes(`- ${c.ko} — 그림: ${pic(c)} / 정방향: ${c.up} / 역방향: ${c.down}`),c.ko);
+  assert.ok((R.match(/해골/g)||[]).length===1&&/해골, 쓰러지거나 떨어지는 사람은 말하지 않습니다/.test(R),"죽음·탑 pictures must stay gentle (해골 only in the rule)");
   for(const [n] of C.colors)assert.ok(R.includes(`- ${n}: ${C.COLOR_MEANING[n]}`),n);
   const dict=R.slice(R.lastIndexOf("[카드 사전]")).split("\n").filter(l=>l.startsWith("- ")).map(l=>l.slice(2).split(" — ")[0]);
   assert.deepEqual(dict,[...dict].sort((a,b)=>a<b?-1:a>b?1:0));
