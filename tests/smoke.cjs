@@ -179,7 +179,7 @@ async function run(browser,vp,n){
   await domHidden("reading");
   check(!(await page.textContent(".reading")).includes("메모글"),"the note was echoed into the reading");
   check(await page.evaluate(()=>!document.getElementById("inj")&&window.__xss===undefined),"note markup was rendered/executed");
-  check((await page.textContent(".ainote")).includes("AI에게 보내져요"),"AI notice missing under the chat divider");
+  check((await page.textContent(".ainote")).includes("AI 도우미에게 보내져요"),"AI notice missing under the chat divider");
   check((await page.textContent("#chathint"))==="","no question counter on a device where AI cannot answer");
   check(await page.locator("#chatlog .msg").count()===1,"chat should start with the greeting only");
   check((await page.textContent("#chatlog .msg .src")).includes("안내"),"greeting should carry the 안내 tag");

@@ -50,13 +50,13 @@ const quote=w=>`‘${w}’`;
 /* 무거운 뜻인지: 보통 정방향은 가볍고 역방향은 무거워요. 예외는 카드의 heavyUp·lightDown 표시(content.js) */
 const heavy=c=>c.rev?!c.lightDown:!!c.heavyUp;
 
-/* '세 카드의 흐름' 요약 — 어느 문장이 나올지는 combine() 이 정해요 */
+/* '세 카드의 흐름' 요약 — 어느 문장이 나올지는 combine() 이 정해요. 권하는 말은 하나만(숙제처럼 여러 개 주지 않게) */
 const FLOW={
-  knot:"지금은 마음이 조금 엉켜 있거나 무거운 때일 수 있어요. 서둘러 답을 찾기보다, 무엇이 나를 멈추게 하는지 먼저 천천히 살펴보면 좋겠어요.",
-  bright:"마지막 카드는 밝은 쪽을 바라보는 마음을 떠올리게 해요. 무리해서 밝아지려 하기보다, 오늘 있었던 좋은 일을 떠올려 보면 어떨까요?",
-  light:"세 카드 모두 부드러운 쪽의 뜻이 나왔어요. 지금 내 안에 있는 좋은 힘을 알아차리고, 그 힘을 어디에 써 볼지 생각해 보세요.",
-  turn:"지금은 마음이 조금 힘들어도, 그 안에서 방법이 보이기 시작할 수 있어요.",
-  mixed:"세 카드에는 가벼운 마음과 무거운 마음이 함께 있어요. 둘 다 내 마음이에요."
+  knot:"세 장을 이어 보니, 마음속 실타래가 조금 엉켜 있는 것 같아요. 서둘러 풀지 않아도 괜찮아요. 어디서부터 엉켰는지 천천히 따라가 봐요.",
+  bright:"마지막 카드가 밝은 쪽을 바라보고 있어요. 억지로 웃지 않아도 괜찮아요. 오늘 있었던 작은 좋은 일 하나를 떠올려 볼까요?",
+  light:"세 장 모두 부드러운 얼굴로 나왔어요. 내 안에 좋은 힘이 숨어 있다는 뜻 같아요. 그 힘을 어디에 써 보고 싶나요?",
+  turn:"첫 카드는 조금 무거워 보여도, 뒤의 카드들은 한결 가벼워요. 힘든 마음 속에서도 작은 길이 보이기 시작하는 것 같아요.",
+  mixed:"세 장 안에 가벼운 마음과 무거운 마음이 나란히 있어요. 둘 다 진짜 내 마음이에요. 지금은 어느 쪽 목소리가 더 크게 들리나요?"
 };
 function combine(a,b,c){
   const n=[a,b,c].filter(heavy).length;
@@ -68,31 +68,33 @@ function combine(a,b,c){
 
 /* ── 리딩 글 ── s = {color, topic, draw:[3장], hasNote}. 결과는 <p> 문단들(HTML) */
 const cardNo=x=>Math.max(0,C.cards.findIndex(c=>c.ko===x.ko));   // 카드마다 문장이 조금씩 달라지게
+/* 그림 이야기(story)의 첫 문장 — 정방향 카드는 그림 속 장면으로 문단을 열어요(사전처럼 뜻부터 늘어놓지 않게) */
+const picture=x=>{const m=/^[^.!?]*[.!?]/.exec(String(x.story||"").trim());return m?m[0]:""};
 function cardPart(x,i,topic){
-  const k=cardNo(x),w=words(x).map(quote),first=w[0],rest=w.slice(1);
-  const who=(x.rev?"거꾸로 나온 ":"")+"이 카드";
-  const frame=[
-    `${josa(who,"은","는")} ${josa(first,"을","를")} 떠올리게 해요.`,
-    `${who}에는 ${josa(first,"이라는","라는")} 뜻이 담겨 있어요.`,
-    `${josa(who,"이","가")} 먼저 보여 주는 뜻은 ${josa(first,"이에요","예요")}.`
-  ][(k+i)%3];
+  const k=cardNo(x),raw=words(x),w=raw.map(quote);
+  // 앞의 두 낱말만 — ‘집중’과 ‘해내는 힘’. 낱말이 길면(‘아쉬움과 잃어버림’) 하나만 — 문장이 늘어지지 않게
+  const both=w[1]&&raw[0].length<=6&&raw[1].length<=7?`${josa(w[0],"과","와")} ${w[1]}`:w[0];
+  const frame=x.rev?[
+    `카드가 거꾸로 나왔어요. 이번에는 ${josa(both,"이","가")} 먼저 눈에 띄어요.`,
+    `거꾸로 놓인 그림은 ${josa(both,"을","를")} 살짝 보여 줘요.`,
+    `그림이 거꾸로 놓였네요. 같은 그림을 반대쪽에서 보면 ${josa(both,"이","가")} 보여요.`
+  ][(k+i)%3]:[picture(x),[
+    `이 그림은 ${josa(both,"을","를")} 속삭이고 있어요.`,
+    `이 카드가 건네는 말은 ${josa(both,"이에요","예요")}.`,
+    `그림에서 ${both}의 기운이 느껴져요.`
+  ][(k+i)%3]].filter(Boolean).join(" ");
   // '앞으로 취할 태도' 자리의 무거운 뜻(혼란·도움을 피함 …)은 그렇게 하라는 말로 읽히지 않게 따로
   const tails=C.ROLE_TAIL[i]||[],tail=i===2&&heavy(x)?C.ROLE_TAIL_HEAVY:tails.length?tails[k%tails.length]:"";
-  const t=[frame,
-    rest.length?`${josa(rest.join(", "),"이라는","라는")} 뜻도 있어요.`:"",
-    i===0&&topic?`${josa(quote(topic),"이라는","라는")} 주제로 보면, ${tail}`:tail,
-    i===0&&topic?C.TOPIC_HOOK[topic]:"",
-    x.notLiteral].filter(Boolean).join(" ");
+  const t=[frame,tail,i===0&&topic?C.TOPIC_HOOK[topic]:"",x.notLiteral].filter(Boolean).join(" ");
   return `<p><b>${C.roles[i]} — ${x.ko} ${x.rev?"역방향":"정방향"}</b><br>${t}</p>`;
 }
 function make(s){
   const [a,b,c]=s.draw,color=s.color;
-  const colorPart=color?`<p><b>내가 고른 색 — ${color}</b><br>${C.COLOR_MEANING[color]||"지금의 마음을 담은 색이에요."} 이 색을 마음 한쪽에 두고 세 카드를 읽어 볼게요.</p>`:"";
-  const close=s.hasNote?"적어 둔 한 줄을 떠올리면서, 카드와 어울리는 작은 행동 하나를 정해 보세요."
-    :"정답을 맞히는 것보다, 세 카드가 함께 들려주는 이야기를 알아차리는 게 더 중요해요.";
-  const colorTie=color?` 처음에 고른 ${josa(color,"이","가")} 말해 주는 마음과 세 카드를 나란히 놓고, 비슷한 점과 다른 점을 생각해 보세요.`:"";
+  const colorPart=color?`<p><b>내가 고른 색 — ${color}</b><br>${C.COLOR_MEANING[color]||"지금의 마음을 담은 색이에요."} 이 색을 마음 한쪽에 살짝 놓아두고, 이제 카드를 펼쳐 볼게요.</p>`:"";
+  const jotted=s.hasNote?" 아까 적어 둔 한 줄과 닮은 데가 있었나요?":"";
+  const colorTie=color?` 처음에 고른 ${color}의 마음도 이 이야기 속에 함께 흐르고 있어요.`:"";
   return [colorPart,...[a,b,c].map((x,i)=>cardPart(x,i,s.topic)),
-    `<p><b>세 카드의 흐름</b><br>${combine(a,b,c)} ${close}${colorTie}</p>`].filter(Boolean).join("\n");
+    `<p><b>세 카드의 흐름</b><br>${combine(a,b,c)}${jotted}${colorTie}</p>`].filter(Boolean).join("\n");
 }
 
 /* ── 향기 고르기 ── 세 카드에서 하나씩 돌아가며: 1번 카드의 첫 결, 2번 카드의 아직 안 나온 첫 결, 3번 카드도 같이.
@@ -122,9 +124,9 @@ function pickScents(draw,lib){
    질문 속 낱말로 알맞은 답을 고르고, 질문에 뽑은 카드 이름이 있으면 그 카드를 두고 답해요.
    카드는 늘 '○○ 카드'라고 불러요('죽음은 …'처럼 쓰면 카드 이야기인지 헷갈려요).
    물어본 카드가 없을 때는 죽음·탑(notLiteral)이 아닌 카드를 골라, 학생 이야기를 무서운 카드와 잇지 않아요. */
-const ROLE_SEE=["지금 내 마음과 닮은 모습으로 볼 수 있어요.","마음속에 숨어 있는 생각으로 볼 수 있어요.","앞으로 가져 볼 마음가짐으로 볼 수 있어요."];
-const ROLE_SEE_HEAVY="이런 마음이 들 때 어떤 마음가짐이 나를 도와줄지 생각해 볼 수 있어요.";
-const CLOSE=["정답은 없으니 편하게 생각해 보세요.","내 생각을 짧게 말해 보거나 적어 봐도 좋아요.","더 이야기하고 싶으면 선생님과 함께 나눠 봐도 좋아요."];
+const ROLE_SEE=["지금 내 마음과 닮은 모습인지도 몰라요.","마음속에 숨어 있는 생각일지도 몰라요.","앞으로 챙겨 갈 마음가짐일지도 몰라요."];
+const ROLE_SEE_HEAVY="이런 마음이 찾아올 때 나를 도와줄 마음가짐은 뭘지 떠올려 봐요.";
+const CLOSE=["정답은 없어요. 떠오르는 대로 생각해 봐요.","생각난 걸 짧게 말해 보거나 적어 봐도 좋아요.","더 이야기하고 싶으면 선생님과 함께 나눠 봐요."];
 /* 흔한 낱말과 같은 카드 이름(나는 바보 같아요 · 달리기 · 힘이 없어요)은 뒤에 '카드'·'정방향'·'역방향'이 올 때만 카드로 봄 */
 const WORDY=/^(?:바보|힘|달|정의|절제|정원|열쇠|물고기|닻)$/;
 const SCARY=/무서|무섭|죽음|나쁜|불길|겁나/;

@@ -718,13 +718,13 @@ const hasWork=()=>state.step>=3||chatLog.length>0;
    force: 선생님이 도움 안내에서 '처음부터'를 고른 경우처럼 묻지 않고 바로 */
 function restart(force){
   if(state.flag||!navOk())return;
-  if(force!==true&&hasWork()&&!confirm("처음으로 가면 지금 카드와 리딩, 대화가 모두 지워져요. 처음으로 갈까요?"))return;
+  if(force!==true&&hasWork()&&!confirm(state.step===4?"다 끝났나요? 처음으로 가면 오늘 카드와 향기가 사라져요.":"처음으로 갈까요? 지금 카드와 이야기는 사라져요."))return;
   clearDraw();askCount=0;
   state=blankState();render();
 }
 function redraw(){
   if(state.flag||!navOk())return;
-  if(!confirm("카드를 다시 뽑으면 지금 카드와 리딩, 대화가 지워져요. 다시 뽑을까요?"))return;
+  if(!confirm("새 카드를 뽑을까요? 지금 카드와 이야기는 사라져요."))return;
   clearDraw();state.step=2;render();
 }
 function start(){if(state.flag||!navOk())return;state.step=0;render()}
@@ -925,6 +925,7 @@ function help(){
       <b>선생님께 — 블라인드 시향</b><br>
       · 앱이 고른 세 향기는 세 카드에서 하나씩 이어져 있어요. 향기 카드마다 어느 카드와 어울리는지 나와요. 실제로 고르는 건 시향 뒤 학생이에요.<br>
       · 이름을 가린 시향지에 한두 방울만 떨어뜨려, 코에서 조금 떨어진 곳에서 손으로 부채질해 맡게 해 주세요. 원액은 피부에 바르거나 먹지 않아요.<br>
+      · 향기는 치료나 약이 아니에요. 학생들에게도 '카드에서 떠오른 느낌을 향기로 이어 보는 놀이'라고 소개해 주세요. (학생 화면에는 꼭 필요한 맡기 약속 세 줄만 보여요.)<br>
       · 천식·알레르기가 있거나 머리가 아픈 학생은 맡지 않아도 돼요. 맡다가 머리가 아프거나 기침이 나면 바로 멈추고 창문을 열어 주세요. 학생 화면에도 같은 안내가 나와요.<br>
       · 향기 목록은 ☰ 메뉴 → <b>향기 목록</b>에서 가지고 계신 향기로 바꿀 수 있어요. 고친 뒤에는 꼭 <b>저장</b>을 눌러 주세요. '기본값으로'도 저장을 눌러야 바뀌고, 저장하지 않고 닫으려 하면 한 번 더 물어봐요.
     </div>
@@ -935,7 +936,7 @@ function help(){
       · AI 리딩에 보내는 것은 감정 색·주제·카드 이름과 방향뿐이에요. 한 줄 메모는 보내지 않아요.<br>
       · 리딩이 끝나면 AI가 향기마다 '어울리는 까닭'과 '맡으면서 생각해 볼 질문', 학생이 눌러서 물어볼 질문 버튼을 만들어요. 향기는 AI가 고르지 않아요. 앱이 향기 목록 안에서 고른 세 가지 그대로예요.<br>
       · '더 물어보기'에서 학생은 AI에게 세 번까지 물어볼 수 있어요(질문 버튼을 눌러도 바로 물어봐요). AI의 답도 글자가 바로바로 나타나요. AI가 답하지 못할 때(키 없음·한도·연결 문제)는 질문 속 낱말에 맞춰 고른 '준비된 답변'이 나오고, 이때는 남은 질문 수가 줄지 않아요. AI를 쓸 수 없는 기기(키가 없고 서버에도 키가 없음)에서는 남은 질문 수를 보여 주지 않아요.<br>
-      · 질문 칸 위에 '질문은 AI에게 보내져요 · 이름·학교·전화번호는 쓰지 마세요' 안내가 늘 보이고, 답마다 'AI 답변'·'준비된 답변' 표시가 붙어요.<br>
+      · 질문 칸 위에 '질문은 AI 도우미에게 보내져요 · 이름·학교·전화번호는 빼고 물어봐요' 안내가 늘 보이고, 답마다 'AI 답변'·'준비된 답변' 표시가 붙어요.<br>
       · '더 물어보기'로 AI에게 보내는 것은 학생이 쓴 질문과 카드 이름·주제·감정 색, 그리고 화면의 리딩 글이에요. 질문 속 전화번호·이메일·긴 숫자는 가려서 보내요.<br>
       · 요금(대략): 학생 1명(AI 리딩 + 질문 3개)에 하이쿠 약 ${won(HAIKU)}원, 소넷 약 ${won(SONNET)}원이에요. 같은 안내문을 되풀이해 보내는 부분은 AI 쪽에서 저장해 두었다 싸게 다시 쓰기도 해요(프롬프트 캐싱). 소넷은 일부 종류의 거절(보안 관련 등)에서만 Anthropic이 다른 모델로 다시 써 줘요. 그 밖의 거절은 준비된 풀이·답변으로 바뀌어요.<br>
       · 보내는 곳: 설정에 키를 넣은 기기는 그 기기에서 바로 Anthropic(미국)으로 보내요. 키가 없는 기기는 이 사이트의 서버(Vercel, 미국)를 거치는데, 서버에 키가 없으면 AI를 부르지 않고 준비된 답변을 보여 줘요. 키를 넣은 기기도 '더 물어보기'에서 AI가 답하지 못하면 같은 질문과 카드 정보로 이 서버에 한 번 더 물어봐요.<br>
@@ -1146,7 +1147,7 @@ function topicScreen(){
   screenEl.innerHTML=panel(head(2,"오늘 묻고 싶은 주제",
     "오늘 이야기해 보고 싶은 주제를 하나 골라 보세요. 길게 설명하지 않아도 괜찮아요.")
    +`<div class="rows">${topics.map((t,i)=>row(t[0],t[1],state.topic===t[0],`setTopic(${i})`,"",state.topic===t[0])).join("")}</div>`
-   +`<textarea id="note" maxlength="100" aria-label="한 줄 메모 (안 써도 돼요)" placeholder="선택 · 한 문장으로 적어도 돼요. 친구 이름은 쓰지 마세요."></textarea>`)
+   +`<textarea id="note" maxlength="100" aria-label="한 줄 메모 (안 써도 돼요)" placeholder="안 써도 돼요 · 마음에 걸리는 일을 한 줄로 (친구 이름은 빼고요)"></textarea>`)
    +`<div class="nav"><button class="btn" onclick="prev()">이전</button>
       <button class="btn primary" ${state.topic?"":"disabled"} onclick="next()">${state.topic?"카드 펼치기":"주제를 먼저 골라요"}</button></div>`+mark;
   document.getElementById("note").value=state.note;   // 학생 글은 HTML 이 아니라 값으로만 넣음
@@ -1162,7 +1163,7 @@ function newDeck(){deck=Reading.makeDeck(fanSize());warmDeck=deck.map(c=>{const 
 function drawScreen(){
   if(!deck){newDeck();state.draw=[]}
   screenEl.innerHTML=head(3,"세 장의 카드를 골라 보세요",
-    "마음이 가는 카드 세 장을 골라 보세요. 카드가 거꾸로 나오면 ‘역방향’이라고 해요.")
+    "숨을 한 번 크게 쉬고, 마음이 끌리는 카드 세 장을 골라 봐요. 거꾸로 나온 카드는 ‘역방향’이라고 불러요.")
    +`<div class="tarot-room">
       <div class="roomhead"><div class="status" id="status" aria-live="polite">카드를 섞는 중<span class="dots"></span></div>
       <div class="counter" id="counter"></div></div>
@@ -1248,8 +1249,8 @@ function syncDraw(){
 function drawReady(){
   const n=state.draw.length,fan=document.getElementById("fan"),st=document.getElementById("status");
   fan.classList.toggle("locked",n>=3);
-  st.innerHTML=n>=3?`세 장이 모두 놓였어요. <b>리딩 보기</b>를 눌러 주세요`
-    :`천천히 생각하고 <b>${n?"다음 카드":"마음이 가는 카드"}</b>를 골라 보세요`;
+  st.innerHTML=n>=3?`세 장이 다 모였어요! <b>리딩 보기</b>를 눌러 봐요`
+    :n===2?`이제 <b>마지막 한 장</b>이에요`:`천천히, <b>${n?"다음 카드":"마음이 끌리는 카드"}</b>를 골라 봐요`;
   syncDraw();
 }
 
@@ -1337,7 +1338,7 @@ function readingScreen(){
       return `<div class="result ${d.rev?"rev":""}" role="button" tabindex="0" aria-label="${i+1}. ${roles[i]} ${d.ko} ${ori} · 그림 이야기 보기"
         onclick="cardInfo(${i})" onkeydown="cardKey(event,${i})">${img(d)}
       <div><span class="lbl">${i+1}. ${roles[i]}</span><h3>${d.ko}</h3><p>${ori}</p><span class="tap" aria-hidden="true">그림 이야기 보기 ›</span></div></div>`}).join("")}</div>`
-  +`<div class="notice top">타로 카드는 미래를 맞히는 게 아니에요. 카드 그림을 보며 내 마음을 떠올려 보는 활동이에요.</div>
+  +`<div class="notice top">✦ 카드는 미래를 맞히지 않아요. 지금 내 마음을 비춰 보는 거울이에요.</div>
     <div class="readbar">${speakBtn("readParts()","",'id="readspeak"')}<p class="readsrc" id="readsrc"></p></div>
     <div class="reading" id="reading"></div>`
   +askBlock()
@@ -1399,13 +1400,12 @@ function scentCard(x,i){
 }
 function scentScreen(){
   screenEl.innerHTML=panel(head(5,"내 카드와 어울리는 향기",
-    "세 카드에서 하나씩 어울리는 향기를 골라 봤어요. 이름을 가리고 맡아 본 뒤, 마음에 드는 향기를 직접 골라 보세요.")
+    "카드마다 어울리는 향기를 하나씩 찾아 왔어요. 이름은 가리고 코로만 맡아 본 뒤, 내 마음에 드는 향기를 골라 봐요.")
    +`<div class="scent-grid" id="scentgrid" style="margin-top:26px">${state.scents.map(scentCard).join("")}</div>`)
-   +`<div class="notice"><b>향기를 맡을 때 지켜요</b><br>
-      · 병에 코를 대지 말고, 손으로 살살 부채질해서 맡아요.<br>
+   +`<div class="notice"><b>향기 맡기 약속</b><br>
+      · 병은 코에서 살짝 떼고, 손으로 살랑살랑 부채질해서 맡아요.<br>
       · 향 원액은 피부에 바르거나 먹지 않아요.<br>
-      · 알레르기나 천식이 있으면 맡지 않아도 괜찮아요. 맡다가 머리가 아프거나 기침이 나면 바로 멈추고 선생님께 말해요.<br>
-      향기는 치료나 약이 아니에요. 카드에서 떠오른 느낌을 향기로 이어 보는 활동이에요.</div>
+      · 알레르기가 있거나 맡기 싫으면 안 맡아도 돼요. 머리가 아프거나 기침이 나면 바로 멈추고 선생님께 말해요.</div>
     <div class="nav"><button class="btn" onclick="prev()">이전</button>
       <button class="btn primary" onclick="restart()">처음부터</button></div>`+mark;
 }
@@ -1579,7 +1579,7 @@ async function askServer(ctx,q){
 function askBlock(){
   if(loadCfg().aiOff)return "";   // 설정에서 AI 기능을 끄면 질문 칸이 없음
   return `<div class="chat">${divider("더 물어보기")}
-    <p class="ainote">질문은 AI에게 보내져요 · 이름·학교·전화번호는 쓰지 마세요</p>
+    <p class="ainote">질문은 AI 도우미에게 보내져요 · 이름·학교·전화번호는 빼고 물어봐요</p>
     <div class="chatlog" id="chatlog" role="log" aria-live="polite"></div>
     <div class="chips" id="chips" role="group" aria-label="눌러서 물어보기"></div>
     <div class="chatbar">
@@ -1642,7 +1642,7 @@ function addMsg(who,text,src){
 function initChat(){
   const t=document.getElementById("q");
   if(!t)return;
-  if(!chatLog.length)chatLog.push({who:"ai",src:"info",text:"안녕하세요! 카드에 대해 궁금한 점을 물어보세요."});
+  if(!chatLog.length)chatLog.push({who:"ai",src:"info",text:"카드를 보다가 궁금한 게 생기면 편하게 물어봐요!"});
   chatLog.forEach(m=>bubble(m.who,m.text,false,m.src));
   if(asking){bubble("ai","",true);document.getElementById("askbtn").disabled=true}
   paintChips();
