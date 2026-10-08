@@ -59,7 +59,10 @@ function serveFile(req,res){
 }
 async function serveMock(req,res,sid){
   const sc=scenes.get(sid);
-  let raw="";for await(const ch of req)raw+=ch;
+  // 조각(Buffer)을 다 모은 뒤 한 번에 글자로 — 조각마다 글자로 바꾸면 16KB 경계에서 한글(3바이트)이 깨져
+  // 리딩 요청이 다른 요청으로 잘못 분류됨(요청이 16KB를 넘으면서 생긴 테스트 서버 버그)
+  const parts=[];for await(const ch of req)parts.push(ch);
+  const raw=Buffer.concat(parts).toString("utf8");
   const body=JSON.parse(raw);
   const sys=Array.isArray(body.system)?body.system[0].text:body.system;
   const kind=body.stream?(sys===P.READING_SYSTEM?"reading":"chat"):body.max_tokens===10?"test":"extras";
